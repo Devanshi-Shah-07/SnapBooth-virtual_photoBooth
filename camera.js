@@ -161,7 +161,7 @@ class CameraEngine {
     }
 
     toggleCameraPower() {
-        if ((this.currentStream && this.currentStream.active) || this.isDemoMode) {
+        if (this.currentStream || this.isDemoMode) {
             this.stopCamera();
         } else {
             this.initCamera();
