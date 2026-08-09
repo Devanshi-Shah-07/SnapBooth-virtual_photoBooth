@@ -106,13 +106,7 @@ class CameraEngine {
             this.updatePowerBtnState(false);
 
             if (fallbackText) {
-                if (err.message === 'MediaDevicesNotSupported') {
-                    fallbackText.innerHTML = `<strong>Mobile Security Warning:</strong><br><span style="font-size: 0.85rem;">Mobile browsers require HTTPS or a web server to access the camera. Tap Virtual Demo Stream below to test!</span>`;
-                } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    fallbackText.innerHTML = `<strong>Camera Access Denied:</strong><br><span style="font-size: 0.85rem;">Please allow camera permissions in your browser bar settings, then tap "Turn On Camera".</span>`;
-                } else {
-                    fallbackText.textContent = 'Unable to connect to camera. Tap "Turn On Camera" or try Virtual Demo Stream below!';
-                }
+                fallbackText.textContent = 'Camera is offline or restricted. Tap "Turn On Camera" or try Virtual Demo Stream below!';
             }
         }
     }
