@@ -527,22 +527,33 @@
 
         <!-- MODAL 4: SETTINGS MODAL -->
         <div id="settings-modal" class="modal-backdrop hidden">
-            <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-content" style="max-width: 520px;">
                 <div class="modal-header">
                     <h2><i class="fa-solid fa-gear"></i> Application Settings</h2>
                     <button class="modal-close-btn" onclick="document.getElementById('settings-modal').classList.add('hidden')">&times;</button>
                 </div>
                 <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
-                    <label style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>Shutter Sound Effects</span>
-                        <input type="checkbox" id="setting-sound" checked>
+                    <label style="display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; font-weight:600;">
+                        <span><i class="fa-solid fa-volume-high"></i> Shutter & Countdown Audio</span>
+                        <input type="checkbox" id="setting-sound" checked style="width:18px; height:18px;">
                     </label>
-                    <label style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>300 DPI Ultra Quality Export</span>
-                        <input type="checkbox" id="setting-hd" checked>
+
+                    <label style="display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; font-weight:600;">
+                        <span><i class="fa-regular fa-clock"></i> Default Timer Delay</span>
+                        <select id="setting-timer-default" class="select-input btn-sm" style="padding:4px 8px;">
+                            <option value="5" selected>5 Seconds</option>
+                            <option value="3">3 Seconds</option>
+                            <option value="1">1 Second</option>
+                        </select>
                     </label>
-                    <div style="border-top:1px solid var(--border); padding-top:14px; font-size:0.8rem; color:var(--text-muted);">
-                        <p><strong>🔒 Privacy Notice:</strong> All photo captures remain 100% strictly on your device inside your browser's IndexedDB storage. Zero images are uploaded to external servers.</p>
+
+                    <div style="border-top:1px solid var(--border); padding-top:14px; display:flex; flex-direction:column; gap:10px;">
+                        <button id="setting-clear-data" class="btn btn-secondary btn-sm danger-text" style="align-self:flex-start;">
+                            <i class="fa-solid fa-trash"></i> Reset Saved Gallery Data
+                        </button>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">
+                            <strong>🔒 Privacy & Data Guarantee:</strong> All photos captured in SnapBooth Studio are processed 100% locally on your computer/phone. Zero photos are sent or stored on cloud servers.
+                        </p>
                     </div>
                 </div>
             </div>

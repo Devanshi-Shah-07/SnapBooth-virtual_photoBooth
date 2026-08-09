@@ -27,14 +27,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let capturedShots = [];
 
-    // Initialize High-Capacity IndexedDB Gallery Database
+    // Initialize High-Capacity IndexedDB Gallery Database in background (non-blocking)
     if (window.galleryDB) {
-        try {
-            await window.galleryDB.init();
-            updateGalleryBadge();
-        } catch (dbErr) {
-            console.warn('Gallery DB Init Warning:', dbErr);
-        }
+        window.galleryDB.init().then(() => updateGalleryBadge()).catch(e => console.warn('Gallery DB Init notice:', e));
     }
 
     // 2. View Switcher Navigation Engine
@@ -569,9 +564,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Settings Modal Setup
+    // Settings Modal Handlers
     document.getElementById('btn-open-settings')?.addEventListener('click', () => {
         document.getElementById('settings-modal')?.classList.remove('hidden');
+    });
+
+    document.getElementById('setting-sound')?.addEventListener('change', (e) => {
+        if (window.soundSynth) {
+            window.soundSynth.enabled = e.target.checked;
+        }
+        window.toast?.info(`Shutter Audio ${e.target.checked ? 'Enabled' : 'Muted'}`);
+    });
+
+    document.getElementById('setting-timer-default')?.addEventListener('change', (e) => {
+        const delaySel = document.getElementById('timer-delay-select');
+        if (delaySel) delaySel.value = e.target.value;
+        window.toast?.info(`Default Timer set to ${e.target.value}s`);
+    });
+
+    document.getElementById('setting-clear-data')?.addEventListener('click', async () => {
+        if (confirm('Clear all saved photobooth strips from local gallery storage?')) {
+            if (window.galleryDB) {
+                await window.galleryDB.clearAll();
+                updateGalleryBadge();
+                window.toast?.success('Gallery storage cleared.');
+            }
+        }
     });
 
     // Helper encode64 for GIF stream
