@@ -3,8 +3,14 @@
    Workflow: LANDING HERO → CAPTURE → CUSTOMIZE → EXPORT & SHARE / PRINT
    ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', async () => {
-    let camera, canvasBuilder, stickerManager;
+let camera = null;
+let canvasBuilder = null;
+let stickerManager = null;
+let capturedShots = [];
+let currentGalleryCategory = 'all';
+
+const initApp = () => {
+    console.log('SnapBooth Studio Application Initializing...');
 
     // 1. Safe Core Modules Initialization
     try {
@@ -25,13 +31,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('StickerManager initialization notice:', e);
     }
 
-    let capturedShots = [];
-
-    // Initialize High-Capacity IndexedDB Gallery Database in background (non-blocking)
-    if (window.galleryDB) {
-        window.galleryDB.init().then(() => updateGalleryBadge()).catch(e => console.warn('Gallery DB Init notice:', e));
-    }
-
     // 2. View Switcher Navigation Engine
     const views = {
         landing: document.getElementById('view-landing'),
@@ -48,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const showView = (viewName) => {
+        console.log('Switching view to:', viewName);
         Object.keys(views).forEach(key => {
             if (views[key]) {
                 if (key === viewName) {
@@ -81,7 +81,154 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Navigation Click Handlers
+    window.showView = showView;
+
+    // Helper functions
+    const updateGalleryBadge = async () => {
+        const badge = document.getElementById('gallery-count-badge');
+        if (!badge || !window.galleryDB) return;
+        try {
+            const count = await window.galleryDB.getPhotoCount();
+            badge.textContent = count;
+            renderGalleryGrid(currentGalleryCategory);
+        } catch (e) {
+            console.log('Badge update notice:', e);
+        }
+    };
+
+    const renderGalleryGrid = async (filterCat = 'all') => {
+        const grid = document.getElementById('gallery-grid');
+        const empty = document.getElementById('gallery-empty');
+        if (!grid || !window.galleryDB) return;
+
+        try {
+            let photos = await window.galleryDB.getAllPhotos();
+            
+            if (filterCat === 'strips') {
+                photos = photos.filter(p => p.type === 'strip');
+            } else if (filterCat === 'gifs') {
+                photos = photos.filter(p => p.type === 'gif');
+            }
+
+            if (photos.length === 0) {
+                grid.innerHTML = '';
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+
+            if (empty) empty.style.display = 'none';
+            grid.innerHTML = '';
+
+            photos.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'gallery-item';
+                card.innerHTML = `
+                    <img src="${item.dataURL}" alt="Saved Memory">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
+                        <span>${new Date(item.timestamp).toLocaleDateString()}</span>
+                        <button class="btn btn-ghost btn-sm danger-text delete-item-btn" data-id="${item.id}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+
+                card.querySelector('.delete-item-btn')?.addEventListener('click', async () => {
+                    await window.galleryDB.deletePhoto(item.id);
+                    updateGalleryBadge();
+                    window.toast?.info('Item deleted from gallery.');
+                });
+
+                grid.appendChild(card);
+            });
+        } catch (e) {
+            console.log('Render gallery grid notice:', e);
+        }
+    };
+
+    const renderShotsTray = () => {
+        const shotsTray = document.getElementById('shots-tray');
+        const shotsCountText = document.getElementById('shots-count-text');
+
+        if (!shotsTray) return;
+
+        if (capturedShots.length === 0) {
+            shotsTray.innerHTML = '<p class="empty-tray-text">No photos taken yet. Tap "TAKE PHOTO" to begin!</p>';
+            if (shotsCountText) shotsCountText.textContent = '0 photos taken';
+            return;
+        }
+
+        if (shotsCountText) shotsCountText.textContent = `${capturedShots.length} photo(s) taken`;
+        shotsTray.innerHTML = '';
+
+        capturedShots.forEach((shotCanvas, index) => {
+            const thumbItem = document.createElement('div');
+            thumbItem.className = 'shot-thumb-item';
+
+            let src = (shotCanvas instanceof HTMLCanvasElement) ? shotCanvas.toDataURL('image/png') : shotCanvas.src;
+
+            thumbItem.innerHTML = `
+                <img src="${src}" alt="Photo ${index + 1}">
+                <span class="shot-badge">#${index + 1}</span>
+                <button class="shot-retake-btn" title="Retake Photo #${index + 1}">
+                    <i class="fa-solid fa-rotate-left"></i> Retake
+                </button>
+            `;
+
+            thumbItem.querySelector('.shot-retake-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                retakeSingleShot(index);
+            });
+
+            shotsTray.appendChild(thumbItem);
+        });
+    };
+
+    const retakeSingleShot = (index) => {
+        if (!camera || camera.isCapturing) return;
+
+        window.toast?.info(`Retaking Photo #${index + 1}...`);
+        camera.startBurstSequence(
+            1,
+            2,
+            (newShotCanvas) => {
+                capturedShots[index] = newShotCanvas;
+                if (canvasBuilder) canvasBuilder.setShots(capturedShots);
+                renderShotsTray();
+                window.toast?.success(`Photo #${index + 1} updated!`);
+            }
+        );
+    };
+
+    const renderResultViewPreview = () => {
+        const holder = document.getElementById('result-canvas-holder');
+        if (!holder || !canvasBuilder) return;
+        holder.innerHTML = '';
+        const img = new Image();
+        img.src = canvasBuilder.toHighResDataURL();
+        img.style.maxHeight = '500px';
+        img.style.borderRadius = '6px';
+        holder.appendChild(img);
+    };
+
+    const getLayoutMaxShots = (layoutName) => {
+        switch (layoutName) {
+            case 'strip-2': return 2;
+            case 'strip-3': return 3;
+            case 'grid-2x2': return 4;
+            case 'grid-3x2': return 6;
+            case 'polaroid': return 1;
+            case 'strip-4':
+            case 'film-roll':
+            default: return 4;
+        }
+    };
+
+    // Initialize High-Capacity IndexedDB Gallery Database in background (non-blocking)
+    if (window.galleryDB) {
+        window.galleryDB.init().then(() => updateGalleryBadge()).catch(e => console.warn('Gallery DB Init notice:', e));
+    }
+
+    // 3. Navigation & Header Button Click Listeners
     document.querySelectorAll('.step-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const attr = btn.getAttribute('data-view');
@@ -111,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showView('capture');
     });
 
-    // 3. Camera Controls Handlers
+    // Camera Controls
     document.getElementById('btn-enable-cam')?.addEventListener('click', () => camera?.toggleCameraPower());
     document.getElementById('btn-toggle-camera-power')?.addEventListener('click', () => camera?.toggleCameraPower());
     document.getElementById('btn-switch-camera')?.addEventListener('click', () => camera?.switchCamera());
@@ -229,79 +376,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-hero-magic-snap')?.addEventListener('click', triggerMagicSnap);
     document.getElementById('btn-magic-snap-capture')?.addEventListener('click', triggerMagicSnap);
 
-    // Shot Manager Tray with Single Shot Retake
-    const renderShotsTray = () => {
-        const shotsTray = document.getElementById('shots-tray');
-        const shotsCountText = document.getElementById('shots-count-text');
-
-        if (!shotsTray) return;
-
-        if (capturedShots.length === 0) {
-            shotsTray.innerHTML = '<p class="empty-tray-text">No shots taken yet. Tap "TAKE PHOTO" to begin!</p>';
-            if (shotsCountText) shotsCountText.textContent = '0 photos taken';
-            return;
-        }
-
-        if (shotsCountText) shotsCountText.textContent = `${capturedShots.length} photo(s) taken`;
-        shotsTray.innerHTML = '';
-
-        capturedShots.forEach((shotCanvas, index) => {
-            const thumbItem = document.createElement('div');
-            thumbItem.className = 'shot-thumb-item';
-
-            let src = (shotCanvas instanceof HTMLCanvasElement) ? shotCanvas.toDataURL('image/png') : shotCanvas.src;
-
-            thumbItem.innerHTML = `
-                <img src="${src}" alt="Shot ${index + 1}">
-                <span class="shot-badge">#${index + 1}</span>
-                <button class="shot-retake-btn" title="Retake Shot #${index + 1}">
-                    <i class="fa-solid fa-rotate-left"></i> Retake
-                </button>
-            `;
-
-            thumbItem.querySelector('.shot-retake-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                retakeSingleShot(index);
-            });
-
-            shotsTray.appendChild(thumbItem);
-        });
-    };
-
-    const retakeSingleShot = (index) => {
-        if (!camera || camera.isCapturing) return;
-
-        window.toast?.info(`Retaking Photo #${index + 1}...`);
-        camera.startBurstSequence(
-            1,
-            2,
-            (newShotCanvas) => {
-                capturedShots[index] = newShotCanvas;
-                if (canvasBuilder) canvasBuilder.setShots(capturedShots);
-                renderShotsTray();
-                window.toast?.success(`Photo #${index + 1} updated!`);
-            }
-        );
-    };
-
-    const getLayoutMaxShots = (layoutName) => {
-        switch (layoutName) {
-            case 'strip-2': return 2;
-            case 'strip-3': return 3;
-            case 'grid-2x2': return 4;
-            case 'grid-3x2': return 6;
-            case 'polaroid': return 1;
-            case 'strip-4':
-            case 'film-roll':
-            default: return 4;
-        }
-    };
-
     document.getElementById('btn-retake-all')?.addEventListener('click', () => {
         capturedShots = [];
         if (canvasBuilder) canvasBuilder.setShots([]);
         renderShotsTray();
-        window.toast?.info('Session shots cleared.');
+        window.toast?.info('Session photos cleared.');
     });
 
     // 6. Editor Studio Tabs & Controls
@@ -397,18 +476,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 7. Export & Result View
-    const renderResultViewPreview = () => {
-        const holder = document.getElementById('result-canvas-holder');
-        if (!holder || !canvasBuilder) return;
-        holder.innerHTML = '';
-        const img = new Image();
-        img.src = canvasBuilder.toHighResDataURL();
-        img.style.maxHeight = '500px';
-        img.style.borderRadius = '6px';
-        holder.appendChild(img);
-    };
-
-    // Download PNG
     document.getElementById('btn-download-png')?.addEventListener('click', () => {
         if (!canvasBuilder) return;
         const link = document.createElement('a');
@@ -418,7 +485,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.toast?.success('PNG Downloaded!');
     });
 
-    // Download GIF
     document.getElementById('btn-download-gif')?.addEventListener('click', () => {
         if (capturedShots.length === 0) {
             window.toast?.warning('No shot frames available for GIF!');
@@ -514,11 +580,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 timestamp: Date.now()
             });
             updateGalleryBadge();
-            window.toast?.success('Saved to Session Gallery!');
+            window.toast?.success('Saved to Memories Gallery!');
         }
     });
-
-    let currentGalleryCategory = 'all';
 
     // Kiosk Mode Handler
     document.getElementById('btn-toggle-kiosk')?.addEventListener('click', () => {
@@ -541,59 +605,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderGalleryGrid(currentGalleryCategory);
         });
     });
-
-    async function updateGalleryBadge() {
-        const badge = document.getElementById('gallery-count-badge');
-        if (!badge || !window.galleryDB) return;
-        const count = await window.galleryDB.getPhotoCount();
-        badge.textContent = count;
-        renderGalleryGrid(currentGalleryCategory);
-    }
-
-    async function renderGalleryGrid(filterCat = 'all') {
-        const grid = document.getElementById('gallery-grid');
-        const empty = document.getElementById('gallery-empty');
-        if (!grid || !window.galleryDB) return;
-
-        let photos = await window.galleryDB.getAllPhotos();
-        
-        if (filterCat === 'strips') {
-            photos = photos.filter(p => p.type === 'strip');
-        } else if (filterCat === 'gifs') {
-            photos = photos.filter(p => p.type === 'gif');
-        }
-
-        if (photos.length === 0) {
-            grid.innerHTML = '';
-            if (empty) empty.style.display = 'block';
-            return;
-        }
-
-        if (empty) empty.style.display = 'none';
-        grid.innerHTML = '';
-
-        photos.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'gallery-item';
-            card.innerHTML = `
-                <img src="${item.dataURL}" alt="Saved Memory">
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
-                    <span>${new Date(item.timestamp).toLocaleDateString()}</span>
-                    <button class="btn btn-ghost btn-sm danger-text delete-item-btn" data-id="${item.id}">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            `;
-
-            card.querySelector('.delete-item-btn')?.addEventListener('click', async () => {
-                await window.galleryDB.deletePhoto(item.id);
-                updateGalleryBadge();
-                window.toast?.info('Item deleted from gallery.');
-            });
-
-            grid.appendChild(card);
-        });
-    }
 
     // Settings Modal Handlers
     document.getElementById('btn-open-settings')?.addEventListener('click', () => {
@@ -643,4 +654,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         return output;
     }
-});
+
+    console.log('SnapBooth Studio initialized successfully.');
+};
+
+// Guarantee Execution regardless of readyState (loading vs interactive vs complete)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
