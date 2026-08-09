@@ -75,6 +75,10 @@
                             <button id="btn-switch-camera" class="icon-btn" title="Switch Camera">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
+                            <label class="icon-btn" title="Take Photo with Phone Camera" for="mobile-camera-input">
+                                <i class="fa-solid fa-camera"></i>
+                                <input type="file" id="mobile-camera-input" accept="image/*" capture="user" hidden>
+                            </label>
                             <label class="icon-btn" title="Upload Image File" for="file-upload-input">
                                 <i class="fa-solid fa-upload"></i>
                                 <input type="file" id="file-upload-input" accept="image/*" multiple hidden>
@@ -104,10 +108,14 @@
                             <p id="fallback-status-text">Camera is powered off. Tap "Turn On Camera" to start!</p>
                             <div class="fallback-btn-group">
                                 <button id="btn-request-camera" class="btn btn-primary btn-sm">
-                                    <i class="fa-solid fa-camera"></i> Turn On Camera
+                                    <i class="fa-solid fa-video"></i> Live Stream Camera
                                 </button>
+                                <label for="mobile-camera-input-fallback" class="btn btn-primary btn-sm btn-mobile-snap">
+                                    <i class="fa-solid fa-camera-retro"></i> Snap Photo with Camera App
+                                    <input type="file" id="mobile-camera-input-fallback" accept="image/*" capture="user" hidden>
+                                </label>
                                 <button id="btn-unblock-guide" class="btn btn-secondary btn-sm warning-btn" onclick="const g=document.getElementById('mobile-unblock-guide'); if(g) g.classList.toggle('hidden');">
-                                    <i class="fa-solid fa-circle-question"></i> How to Unblock Camera
+                                    <i class="fa-solid fa-circle-question"></i> How to Unblock Browser
                                 </button>
                                 <button id="btn-virtual-demo" class="btn btn-accent btn-sm">
                                     <i class="fa-solid fa-play"></i> Virtual Demo Stream

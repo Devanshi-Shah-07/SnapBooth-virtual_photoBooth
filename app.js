@@ -128,6 +128,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Handle Native Mobile Camera Inputs (Instant Snapshot via Phone Camera App)
+    const handleNativeMobileCameraInput = (inputEl) => {
+        if (!inputEl) return;
+        inputEl.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            files.forEach(file => {
+                const img = new Image();
+                img.onload = () => {
+                    capturedShots.push(img);
+                    canvasBuilder.setShots([...capturedShots]);
+                    renderShotsTray();
+                    if (window.confetti) {
+                        window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+                    }
+                };
+                img.src = URL.createObjectURL(file);
+            });
+            inputEl.value = '';
+        });
+    };
+
+    handleNativeMobileCameraInput(document.getElementById('mobile-camera-input'));
+    handleNativeMobileCameraInput(document.getElementById('mobile-camera-input-fallback'));
+
     // Render Shot Manager Tray Thumbnails
     const renderShotsTray = () => {
         if (!shotsTray) return;
