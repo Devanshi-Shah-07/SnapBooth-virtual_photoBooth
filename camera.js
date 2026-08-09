@@ -8,7 +8,7 @@ class CameraEngine {
     constructor() {
         this.videoElement = document.getElementById('webcam-video');
         this.filterCanvas = document.getElementById('live-filter-canvas');
-        this.filterCtx = this.filterCanvas.getContext('2d');
+        this.filterCtx = this.filterCanvas ? this.filterCanvas.getContext('2d') : null;
         this.fallbackElement = document.getElementById('camera-fallback');
         this.statusText = document.getElementById('camera-status-text');
         this.statusDot = document.querySelector('.status-dot');
@@ -18,6 +18,7 @@ class CameraEngine {
         this.activeFilter = 'normal';
         this.isCapturing = false;
         this.isDemoMode = false;
+        this.isPoweredOn = false;
         this.animFrameId = null;
         this.demoAngle = 0;
 
@@ -49,7 +50,6 @@ class CameraEngine {
             throw new Error('MediaDevicesNotSupported');
         }
 
-        // Simplest, most reliable mobile constraints
         const constraintTiers = [
             { video: true },
             { video: { facingMode: this.facingMode } },
@@ -72,6 +72,8 @@ class CameraEngine {
 
     async initCamera() {
         this.isDemoMode = false;
+        this.isPoweredOn = true;
+
         if (this.currentStream) {
             this.currentStream.getTracks().forEach(track => track.stop());
             this.currentStream = null;
@@ -81,40 +83,56 @@ class CameraEngine {
 
         try {
             const stream = await this.getMediaStream();
+            if (!this.isPoweredOn) {
+                // If user toggled off while stream was opening
+                stream.getTracks().forEach(track => track.stop());
+                return;
+            }
+
             this.currentStream = stream;
-            this.videoElement.srcObject = stream;
+            if (this.videoElement) {
+                this.videoElement.srcObject = stream;
+            }
 
             // Hide fallback overlay when camera stream is live
-            this.fallbackElement.classList.add('hidden');
-            this.fallbackElement.style.display = 'none';
+            if (this.fallbackElement) {
+                this.fallbackElement.classList.add('hidden');
+                this.fallbackElement.style.display = 'none';
+            }
             this.setCameraState('READY');
             this.updatePowerBtnState(true);
 
-            // Handle mobile video play user interaction requirements
-            const playPromise = this.videoElement.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                    const unlockVideo = () => {
-                        this.videoElement.play();
-                        document.removeEventListener('click', unlockVideo);
-                        document.removeEventListener('touchstart', unlockVideo);
-                    };
-                    document.addEventListener('click', unlockVideo, { once: true });
-                    document.addEventListener('touchstart', unlockVideo, { once: true });
-                });
-            }
+            if (this.videoElement) {
+                const playPromise = this.videoElement.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        const unlockVideo = () => {
+                            if (this.videoElement) this.videoElement.play();
+                            document.removeEventListener('click', unlockVideo);
+                            document.removeEventListener('touchstart', unlockVideo);
+                        };
+                        document.addEventListener('click', unlockVideo, { once: true });
+                        document.addEventListener('touchstart', unlockVideo, { once: true });
+                    });
+                }
 
-            this.videoElement.onloadedmetadata = () => {
-                this.filterCanvas.width = this.videoElement.videoWidth || 640;
-                this.filterCanvas.height = this.videoElement.videoHeight || 480;
-            };
+                this.videoElement.onloadedmetadata = () => {
+                    if (this.filterCanvas && this.videoElement) {
+                        this.filterCanvas.width = this.videoElement.videoWidth || 640;
+                        this.filterCanvas.height = this.videoElement.videoHeight || 480;
+                    }
+                };
+            }
 
             this.renderLiveFilters();
 
         } catch (err) {
             console.warn('Camera access error on phone/desktop:', err);
-            this.fallbackElement.classList.remove('hidden');
-            this.fallbackElement.style.display = 'flex';
+            this.isPoweredOn = false;
+            if (this.fallbackElement) {
+                this.fallbackElement.classList.remove('hidden');
+                this.fallbackElement.style.display = 'flex';
+            }
             this.updatePowerBtnState(false);
 
             if (fallbackText) {
@@ -161,7 +179,7 @@ class CameraEngine {
     }
 
     toggleCameraPower() {
-        if (this.currentStream || this.isDemoMode) {
+        if (this.isPoweredOn || this.currentStream || this.isDemoMode) {
             this.stopCamera();
         } else {
             this.initCamera();
@@ -169,18 +187,33 @@ class CameraEngine {
     }
 
     stopCamera() {
+        this.isPoweredOn = false;
+        this.isDemoMode = false;
+
         if (this.animFrameId) {
             cancelAnimationFrame(this.animFrameId);
             this.animFrameId = null;
         }
+
         if (this.currentStream) {
-            this.currentStream.getTracks().forEach(track => track.stop());
+            try {
+                this.currentStream.getTracks().forEach(track => {
+                    track.stop();
+                    if (this.currentStream.removeTrack) {
+                        this.currentStream.removeTrack(track);
+                    }
+                });
+            } catch (e) {
+                console.log('Stream track stop notice:', e);
+            }
             this.currentStream = null;
         }
+
         if (this.videoElement) {
+            this.videoElement.pause();
             this.videoElement.srcObject = null;
+            try { this.videoElement.load(); } catch (e) {}
         }
-        this.isDemoMode = false;
 
         if (this.fallbackElement) {
             this.fallbackElement.classList.remove('hidden');
@@ -192,10 +225,10 @@ class CameraEngine {
             fallbackText.textContent = 'Camera is powered off. Tap "Turn On Camera" to start!';
         }
 
-        if (this.statusText) this.statusText.textContent = 'Camera Off';
-        if (this.statusDot) this.statusDot.style.background = '#ef4444';
-
+        this.setCameraState('OFF');
         this.updatePowerBtnState(false);
+
+        if (window.toast) window.toast.info('Camera Powered Off');
     }
 
     updatePowerBtnState(isOn) {
@@ -216,7 +249,7 @@ class CameraEngine {
         if (headerPowerBtn) {
             if (isOn) {
                 headerPowerBtn.className = 'btn btn-secondary btn-sm active-power';
-                if (headerBtnText) headerBtnText.textContent = 'Camera On';
+                if (headerBtnText) headerBtnText.textContent = 'Turn Off Camera';
             } else {
                 headerPowerBtn.className = 'btn btn-primary btn-sm power-off';
                 if (headerBtnText) headerBtnText.textContent = 'Turn On Camera';
@@ -227,20 +260,27 @@ class CameraEngine {
     // Launch virtual simulated live selfie camera feed
     startVirtualDemoFeed() {
         this.isDemoMode = true;
-        this.fallbackElement.classList.add('hidden');
-        this.fallbackElement.style.display = 'none';
+        this.isPoweredOn = true;
+        if (this.fallbackElement) {
+            this.fallbackElement.classList.add('hidden');
+            this.fallbackElement.style.display = 'none';
+        }
         this.statusText.textContent = 'Virtual Demo Stream Live';
         if (this.statusDot) this.statusDot.style.background = '#3b82f6';
         this.updatePowerBtnState(true);
 
-        this.filterCanvas.width = 640;
-        this.filterCanvas.height = 480;
+        if (this.filterCanvas) {
+            this.filterCanvas.width = 640;
+            this.filterCanvas.height = 480;
+        }
 
         const loop = () => {
-            if (!this.isDemoMode) return;
+            if (!this.isDemoMode || !this.isPoweredOn) return;
 
-            const w = this.filterCanvas.width;
-            const h = this.filterCanvas.height;
+            const w = this.filterCanvas ? this.filterCanvas.width : 640;
+            const h = this.filterCanvas ? this.filterCanvas.height : 480;
+
+            if (!this.filterCtx) return;
 
             this.filterCtx.save();
 
@@ -328,31 +368,34 @@ class CameraEngine {
     }
 
     renderLiveFilters() {
-        if (this.isDemoMode) return;
+        if (this.isDemoMode || !this.isPoweredOn) return;
 
         if (!this.videoElement || this.videoElement.paused || this.videoElement.ended) {
             this.animFrameId = requestAnimationFrame(() => this.renderLiveFilters());
             return;
         }
 
-        const width = this.filterCanvas.width;
-        const height = this.filterCanvas.height;
+        const width = this.filterCanvas ? this.filterCanvas.width : 640;
+        const height = this.filterCanvas ? this.filterCanvas.height : 480;
 
-        this.filterCtx.save();
-        if (this.facingMode === 'user') {
-            this.filterCtx.translate(width, 0);
-            this.filterCtx.scale(-1, 1);
+        if (this.filterCtx) {
+            this.filterCtx.save();
+            if (this.facingMode === 'user') {
+                this.filterCtx.translate(width, 0);
+                this.filterCtx.scale(-1, 1);
+            }
+
+            this.filterCtx.drawImage(this.videoElement, 0, 0, width, height);
+            this.filterCtx.restore();
+
+            this.applyFilterEffect(this.filterCtx, width, height, this.activeFilter);
         }
-
-        this.filterCtx.drawImage(this.videoElement, 0, 0, width, height);
-        this.filterCtx.restore();
-
-        this.applyFilterEffect(this.filterCtx, width, height, this.activeFilter);
 
         this.animFrameId = requestAnimationFrame(() => this.renderLiveFilters());
     }
 
     applyFilterEffect(ctx, width, height, filterName) {
+        if (!ctx) return;
         switch (filterName) {
             case 'vintage':
                 ctx.fillStyle = 'rgba(255, 180, 50, 0.12)';
@@ -431,17 +474,14 @@ class CameraEngine {
         }
 
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = this.filterCanvas.width || 640;
-        tempCanvas.height = this.filterCanvas.height || 480;
+        tempCanvas.width = this.filterCanvas ? this.filterCanvas.width : 640;
+        tempCanvas.height = this.filterCanvas ? this.filterCanvas.height : 480;
         const tempCtx = tempCanvas.getContext('2d');
 
-        // Enable high-quality image smoothing for sharp captures
         tempCtx.imageSmoothingEnabled = true;
         tempCtx.imageSmoothingQuality = 'high';
 
-        if (this.isDemoMode) {
-            tempCtx.drawImage(this.filterCanvas, 0, 0);
-        } else {
+        if (this.filterCanvas) {
             tempCtx.drawImage(this.filterCanvas, 0, 0);
         }
 
@@ -458,36 +498,40 @@ class CameraEngine {
         const progressText = document.getElementById('shot-progress-text');
         const dotsContainer = document.getElementById('shot-dots');
 
-        dotsContainer.innerHTML = '';
-        for (let i = 0; i < totalShots; i++) {
-            const dot = document.createElement('div');
-            dot.className = 'dot';
-            dotsContainer.appendChild(dot);
+        if (dotsContainer) {
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i < totalShots; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dotsContainer.appendChild(dot);
+            }
         }
 
-        progressOverlay.classList.remove('hidden');
-        countdownOverlay.classList.remove('hidden');
+        if (progressOverlay) progressOverlay.classList.remove('hidden');
+        if (countdownOverlay) countdownOverlay.classList.remove('hidden');
 
         const capturedCanvases = [];
 
         for (let shotIndex = 0; shotIndex < totalShots; shotIndex++) {
             this.setCameraState('COUNTDOWN');
-            progressText.textContent = `Photo ${shotIndex + 1} of ${totalShots}`;
+            if (progressText) progressText.textContent = `Photo ${shotIndex + 1} of ${totalShots}`;
             
-            const dots = dotsContainer.querySelectorAll('.dot');
-            dots.forEach((d, idx) => {
-                if (idx <= shotIndex) d.classList.add('filled');
-            });
+            if (dotsContainer) {
+                const dots = dotsContainer.querySelectorAll('.dot');
+                dots.forEach((d, idx) => {
+                    if (idx <= shotIndex) d.classList.add('filled');
+                });
+            }
 
             for (let sec = delaySeconds; sec > 0; sec--) {
-                countdownNumber.textContent = sec;
+                if (countdownNumber) countdownNumber.textContent = sec;
                 if (window.soundSynth) window.soundSynth.playBeep(700, 0.08);
                 await new Promise(res => setTimeout(res, 1000));
             }
 
             this.setCameraState('CAPTURING');
             if (window.soundSynth) window.soundSynth.playSnapBeep();
-            countdownNumber.textContent = '📸';
+            if (countdownNumber) countdownNumber.textContent = '📸';
             await new Promise(res => setTimeout(res, 200));
 
             const shotCanvas = this.captureFrame();
@@ -500,8 +544,8 @@ class CameraEngine {
             await new Promise(res => setTimeout(res, 500));
         }
 
-        countdownOverlay.classList.add('hidden');
-        progressOverlay.classList.add('hidden');
+        if (countdownOverlay) countdownOverlay.classList.add('hidden');
+        if (progressOverlay) progressOverlay.classList.add('hidden');
         this.isCapturing = false;
         this.setCameraState('CAPTURED');
 
