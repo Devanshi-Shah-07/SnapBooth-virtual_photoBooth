@@ -1,6 +1,6 @@
 /* ==========================================================================
-   SnapBooth Studio - IndexedDB Storage Engine
-   High-capacity client database for photobooth strips and sessions.
+   SnapBooth Studio - High-Capacity IndexedDB Storage Engine
+   Supports savePhotoStrip, getPhotoCount, getAllPhotos, deletePhoto, clearAll
    Replaces limited localStorage (~5MB) with virtually unlimited storage.
    ========================================================================== */
 
@@ -38,17 +38,28 @@ class GalleryDB {
         });
     }
 
-    async addPhoto(dataUrl) {
+    async init() {
+        await this.open();
+        await this.migrateFromLocalStorage();
+        return true;
+    }
+
+    async savePhotoStrip(item) {
         await this.open();
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
 
+            const dataUrlVal = typeof item === 'string' ? item : (item.dataURL || item.dataUrl);
+
             const record = {
                 id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                dataUrl: dataUrl,
+                dataURL: dataUrlVal,
+                dataUrl: dataUrlVal,
+                type: item.type || 'strip',
+                layout: item.layout || 'strip-4',
                 createdAt: new Date().toLocaleString(),
-                timestamp: Date.now()
+                timestamp: item.timestamp || Date.now()
             };
 
             const request = store.add(record);
@@ -57,17 +68,34 @@ class GalleryDB {
         });
     }
 
+    async addPhoto(dataUrl) {
+        return this.savePhotoStrip({ dataURL: dataUrl });
+    }
+
+    async getPhotoCount() {
+        await this.open();
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.count();
+            request.onsuccess = () => resolve(request.result || 0);
+            request.onerror = () => resolve(0);
+        });
+    }
+
     async getAllPhotos() {
         await this.open();
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readonly');
             const store = transaction.objectStore(this.storeName);
-            const index = store.index('createdAt');
             const request = store.getAll();
 
             request.onsuccess = () => {
                 const results = request.result || [];
-                // Sort newest first
+                // Standardize field names
+                results.forEach(r => {
+                    if (!r.dataURL && r.dataUrl) r.dataURL = r.dataUrl;
+                });
                 results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 resolve(results);
             };
@@ -99,7 +127,6 @@ class GalleryDB {
         });
     }
 
-    // Migrate legacy photos from localStorage if present
     async migrateFromLocalStorage() {
         try {
             const legacyData = localStorage.getItem('snapbooth_gallery');
@@ -107,9 +134,9 @@ class GalleryDB {
                 const parsed = JSON.parse(legacyData);
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     for (const item of parsed) {
-                        const dataUrl = typeof item === 'string' ? item : item.dataUrl;
+                        const dataUrl = typeof item === 'string' ? item : (item.dataURL || item.dataUrl);
                         if (dataUrl) {
-                            await this.addPhoto(dataUrl);
+                            await this.savePhotoStrip(dataUrl);
                         }
                     }
                     localStorage.removeItem('snapbooth_gallery');
