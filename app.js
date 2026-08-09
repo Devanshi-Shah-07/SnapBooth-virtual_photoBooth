@@ -4,10 +4,26 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Core Modules Initialization
-    const camera = new CameraEngine();
-    const canvasBuilder = new PhotoboothCanvasBuilder('photobooth-canvas');
-    const stickerManager = new StickerManager('sticker-drag-layer');
+    let camera, canvasBuilder, stickerManager;
+
+    // 1. Safe Core Modules Initialization
+    try {
+        camera = new CameraEngine();
+    } catch (e) {
+        console.warn('CameraEngine initialization notice:', e);
+    }
+
+    try {
+        canvasBuilder = new PhotoboothCanvasBuilder('photobooth-canvas');
+    } catch (e) {
+        console.warn('CanvasBuilder initialization notice:', e);
+    }
+
+    try {
+        stickerManager = new StickerManager();
+    } catch (e) {
+        console.warn('StickerManager initialization notice:', e);
+    }
 
     let capturedShots = [];
 
@@ -58,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Auto initialize camera if entering capture mode
-        if (viewName === 'capture' && !camera.currentStream && !camera.isDemoMode) {
+        if (viewName === 'capture' && camera && !camera.currentStream && !camera.isDemoMode) {
             camera.initCamera();
         }
 
@@ -73,13 +89,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Navigation Click Handlers
     document.querySelectorAll('.step-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const viewTarget = btn.getAttribute('data-view').replace('view-', '');
-            showView(viewTarget);
+            const attr = btn.getAttribute('data-view');
+            if (attr) {
+                const viewTarget = attr.replace('view-', '');
+                showView(viewTarget);
+            }
         });
     });
 
     document.getElementById('header-logo-home')?.addEventListener('click', () => showView('landing'));
     document.getElementById('btn-start-photobooth')?.addEventListener('click', () => showView('capture'));
+    
     document.getElementById('btn-proceed-to-customize')?.addEventListener('click', () => {
         if (capturedShots.length === 0) {
             window.toast?.warning('Take at least 1 photo first!');
@@ -87,20 +107,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         showView('editor');
     });
+
     document.getElementById('btn-proceed-to-export')?.addEventListener('click', () => showView('result'));
+    
     document.getElementById('btn-restart-photobooth')?.addEventListener('click', () => {
         capturedShots = [];
         renderShotsTray();
         showView('capture');
     });
 
-    // 3. Camera Power & Switch Handlers
-    document.getElementById('btn-enable-cam')?.addEventListener('click', () => camera.toggleCameraPower());
-    document.getElementById('btn-toggle-camera-power')?.addEventListener('click', () => camera.toggleCameraPower());
-    document.getElementById('btn-switch-camera')?.addEventListener('click', () => camera.switchCamera());
-    document.getElementById('btn-request-camera')?.addEventListener('click', () => camera.initCamera());
+    // 3. Camera Controls Handlers
+    document.getElementById('btn-enable-cam')?.addEventListener('click', () => camera?.toggleCameraPower());
+    document.getElementById('btn-toggle-camera-power')?.addEventListener('click', () => camera?.toggleCameraPower());
+    document.getElementById('btn-switch-camera')?.addEventListener('click', () => camera?.switchCamera());
+    document.getElementById('btn-request-camera')?.addEventListener('click', () => camera?.initCamera());
     document.getElementById('btn-virtual-demo')?.addEventListener('click', () => {
-        camera.startVirtualDemoFeed();
+        camera?.startVirtualDemoFeed();
         window.toast?.info('Virtual Demo Camera Stream Active');
     });
 
@@ -111,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('#filter-bar .filter-chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
         const filterName = chip.getAttribute('data-filter');
-        camera.setFilter(filterName);
+        if (camera) camera.setFilter(filterName);
     });
 
     // File Upload Fallback
@@ -130,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     capturedShots.push(img);
                     loadedCount++;
                     if (loadedCount === files.length) {
-                        canvasBuilder.setShots(capturedShots);
+                        if (canvasBuilder) canvasBuilder.setShots(capturedShots);
                         renderShotsTray();
                         showView('editor');
                         window.toast?.success(`${files.length} photo(s) uploaded!`);
@@ -147,10 +169,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnStartCapture) {
         btnStartCapture.addEventListener('click', () => {
-            if (camera.isCapturing) return;
+            if (!camera || camera.isCapturing) return;
 
-            const delay = parseInt(delaySelect.value, 10) || 3;
-            const shotsNeeded = getLayoutMaxShots(canvasBuilder.layout);
+            const delay = parseInt(delaySelect?.value || '3', 10) || 3;
+            const shotsNeeded = getLayoutMaxShots(canvasBuilder?.layout || 'strip-4');
 
             capturedShots = [];
             renderShotsTray();
@@ -163,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     renderShotsTray();
                 },
                 () => {
-                    canvasBuilder.setShots(capturedShots);
+                    if (canvasBuilder) canvasBuilder.setShots(capturedShots);
                     window.toast?.success('Photobooth session complete! Proceeding to Customize...');
                     setTimeout(() => showView('editor'), 600);
 
@@ -178,31 +200,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 5. Signature "Magic Snap" Feature
     const triggerMagicSnap = () => {
         showView('capture');
-        if (!camera.currentStream && !camera.isDemoMode) {
+        if (camera && !camera.currentStream && !camera.isDemoMode) {
             camera.startVirtualDemoFeed();
         }
 
         capturedShots = [];
         renderShotsTray();
 
-        camera.startBurstSequence(
-            4,
-            2,
-            (shotCanvas) => {
-                capturedShots.push(shotCanvas);
-                renderShotsTray();
-            },
-            () => {
-                canvasBuilder.applyTemplate('y2k');
-                canvasBuilder.setShots(capturedShots);
-                window.toast?.success('✨ Magic Snap generated your design!');
-                showView('result');
+        if (camera) {
+            camera.startBurstSequence(
+                4,
+                2,
+                (shotCanvas) => {
+                    capturedShots.push(shotCanvas);
+                    renderShotsTray();
+                },
+                () => {
+                    if (canvasBuilder) {
+                        canvasBuilder.applyTemplate('y2k');
+                        canvasBuilder.setShots(capturedShots);
+                    }
+                    window.toast?.success('✨ Magic Snap generated your design!');
+                    showView('result');
 
-                if (window.confetti) {
-                    window.confetti({ particleCount: 100, spread: 90, origin: { y: 0.6 } });
+                    if (window.confetti) {
+                        window.confetti({ particleCount: 100, spread: 90, origin: { y: 0.6 } });
+                    }
                 }
-            }
-        );
+            );
+        }
     };
 
     document.getElementById('btn-hero-magic-snap')?.addEventListener('click', triggerMagicSnap);
@@ -233,7 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             thumbItem.innerHTML = `
                 <img src="${src}" alt="Shot ${index + 1}">
                 <span class="shot-badge">#${index + 1}</span>
-                <button class="shot-retake-btn" title="Retake Shot #${index + 1}" data-index="${index}">
+                <button class="shot-retake-btn" title="Retake Shot #${index + 1}">
                     <i class="fa-solid fa-rotate-left"></i> Retake
                 </button>
             `;
@@ -248,7 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const retakeSingleShot = (index) => {
-        if (camera.isCapturing) return;
+        if (!camera || camera.isCapturing) return;
 
         window.toast?.info(`Retaking Photo #${index + 1}...`);
         camera.startBurstSequence(
@@ -256,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             2,
             (newShotCanvas) => {
                 capturedShots[index] = newShotCanvas;
-                canvasBuilder.setShots(capturedShots);
+                if (canvasBuilder) canvasBuilder.setShots(capturedShots);
                 renderShotsTray();
                 window.toast?.success(`Photo #${index + 1} updated!`);
             }
@@ -278,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btn-retake-all')?.addEventListener('click', () => {
         capturedShots = [];
-        canvasBuilder.setShots([]);
+        if (canvasBuilder) canvasBuilder.setShots([]);
         renderShotsTray();
         window.toast?.info('Session shots cleared.');
     });
@@ -300,7 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelectorAll('.layout-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             const layout = card.getAttribute('data-layout');
-            canvasBuilder.setLayout(layout);
+            if (canvasBuilder) canvasBuilder.setLayout(layout);
         });
     });
 
@@ -308,8 +334,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.template-item-card').forEach(card => {
         card.addEventListener('click', () => {
             const templateId = card.getAttribute('data-template');
-            canvasBuilder.applyTemplate(templateId);
-            window.toast?.success(`Applied ${card.querySelector('h4').textContent} Theme!`);
+            if (canvasBuilder) canvasBuilder.applyTemplate(templateId);
+            window.toast?.success(`Applied ${card.querySelector('h4')?.textContent || templateId} Theme!`);
         });
     });
 
@@ -319,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!chip) return;
         document.querySelectorAll('#border-style-selector .filter-chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        canvasBuilder.setBorderStyle(chip.getAttribute('data-border'));
+        if (canvasBuilder) canvasBuilder.setBorderStyle(chip.getAttribute('data-border'));
     });
 
     // Frame Color Swatches
@@ -327,7 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         swatch.addEventListener('click', () => {
             document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
             swatch.classList.add('active');
-            canvasBuilder.setFrameStyle(swatch.getAttribute('data-color'), canvasBuilder.padding, canvasBuilder.cornerRadius);
+            if (canvasBuilder) canvasBuilder.setFrameStyle(swatch.getAttribute('data-color'), canvasBuilder.padding, canvasBuilder.cornerRadius);
         });
     });
 
@@ -338,12 +364,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dateToggle = document.getElementById('toggle-date-stamp');
 
     const updateCanvasText = () => {
-        canvasBuilder.setTextOptions(
-            headerInput.value,
-            footerInput.value,
-            fontSelect.value,
-            dateToggle.checked
-        );
+        if (canvasBuilder) {
+            canvasBuilder.setTextOptions(
+                headerInput?.value || '',
+                footerInput?.value || '',
+                fontSelect?.value || "'Caveat', cursive",
+                dateToggle ? dateToggle.checked : true
+            );
+        }
     };
 
     if (headerInput) headerInput.addEventListener('input', updateCanvasText);
@@ -357,26 +385,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const date = document.getElementById('branding-event-date')?.value || '';
         const tagline = document.getElementById('branding-tagline')?.value || '';
 
-        canvasBuilder.setEventBranding({ name, date, tagline });
+        if (canvasBuilder) canvasBuilder.setEventBranding({ name, date, tagline });
         window.toast?.success('Custom Event Branding applied!');
     });
 
     // Undo / Redo / Reset Design Buttons
     document.getElementById('btn-undo')?.addEventListener('click', () => {
-        if (canvasBuilder.undo()) window.toast?.info('Undo');
+        if (canvasBuilder && canvasBuilder.undo()) window.toast?.info('Undo');
     });
     document.getElementById('btn-redo')?.addEventListener('click', () => {
-        if (canvasBuilder.redo()) window.toast?.info('Redo');
+        if (canvasBuilder && canvasBuilder.redo()) window.toast?.info('Redo');
     });
     document.getElementById('btn-reset-design')?.addEventListener('click', () => {
-        canvasBuilder.resetDesign();
+        if (canvasBuilder) canvasBuilder.resetDesign();
         window.toast?.info('Design reset to default.');
     });
 
     // 7. Export & Result View
     const renderResultViewPreview = () => {
         const holder = document.getElementById('result-canvas-holder');
-        if (!holder) return;
+        if (!holder || !canvasBuilder) return;
         holder.innerHTML = '';
         const img = new Image();
         img.src = canvasBuilder.toHighResDataURL();
@@ -387,6 +415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Download PNG
     document.getElementById('btn-download-png')?.addEventListener('click', () => {
+        if (!canvasBuilder) return;
         const link = document.createElement('a');
         link.download = `SnapBooth-${Date.now()}.png`;
         link.href = canvasBuilder.toHighResDataURL();
@@ -431,7 +460,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Direct Print & Print Size Modal Setup
     document.getElementById('btn-direct-print')?.addEventListener('click', () => {
         const printArea = document.getElementById('printable-area');
-        if (!printArea) return;
+        if (!printArea || !canvasBuilder) return;
         printArea.innerHTML = `<img src="${canvasBuilder.toHighResDataURL()}" alt="Photobooth Print">`;
         window.toast?.info('Opening print dialog...');
         setTimeout(() => window.print(), 300);
@@ -439,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btn-trigger-print-now')?.addEventListener('click', () => {
         const printArea = document.getElementById('printable-area');
-        if (!printArea) return;
+        if (!printArea || !canvasBuilder) return;
         printArea.innerHTML = `<img src="${canvasBuilder.toHighResDataURL()}" alt="Photobooth Print">`;
         document.getElementById('print-size-modal')?.classList.add('hidden');
         window.toast?.info('Opening print dialog...');
@@ -480,6 +509,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Save to High-Capacity IndexedDB Gallery
     document.getElementById('btn-save-to-gallery')?.addEventListener('click', async () => {
+        if (!canvasBuilder) return;
         const dataURL = canvasBuilder.toHighResDataURL();
         if (window.galleryDB) {
             await window.galleryDB.savePhotoStrip({
@@ -529,7 +559,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
 
-            card.querySelector('.delete-item-btn').addEventListener('click', async () => {
+            card.querySelector('.delete-item-btn')?.addEventListener('click', async () => {
                 await window.galleryDB.deletePhoto(item.id);
                 updateGalleryBadge();
                 window.toast?.info('Item deleted from gallery.');

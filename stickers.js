@@ -28,10 +28,10 @@ class StickerEngine {
     bindCategoryTabs() {
         const catBtns = document.querySelectorAll('.sticker-cat-btn');
         catBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', () => {
                 catBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                const cat = btn.dataset.cat;
+                const cat = btn.dataset.cat || 'cute';
                 this.renderCategoryGrid(cat);
             });
         });
@@ -39,6 +39,11 @@ class StickerEngine {
 
     renderCategoryGrid(cat) {
         this.currentCategory = cat;
+        if (!this.gridContainer) {
+            this.gridContainer = document.getElementById('sticker-grid');
+        }
+        if (!this.gridContainer) return;
+
         this.gridContainer.innerHTML = '';
         const stickers = this.stickerLibrary[cat] || [];
 
@@ -52,6 +57,11 @@ class StickerEngine {
     }
 
     addStickerToCanvas(symbol) {
+        if (!this.dragLayer) {
+            this.dragLayer = document.getElementById('sticker-drag-layer');
+        }
+        if (!this.dragLayer) return;
+
         const sticker = document.createElement('div');
         sticker.className = 'draggable-sticker';
         sticker.innerHTML = `
@@ -59,21 +69,24 @@ class StickerEngine {
             <div class="sticker-delete-btn"><i class="fa-solid fa-xmark"></i></div>
         `;
 
-        // Position initial sticker in middle of canvas layer
         const rect = this.dragLayer.getBoundingClientRect();
-        sticker.style.left = `${(rect.width / 2) - 25}px`;
-        sticker.style.top = `${(rect.height / 2) - 25}px`;
+        const leftPos = rect.width > 0 ? (rect.width / 2) - 25 : 100;
+        const topPos = rect.height > 0 ? (rect.height / 2) - 25 : 100;
+
+        sticker.style.left = `${leftPos}px`;
+        sticker.style.top = `${topPos}px`;
 
         this.makeDraggable(sticker);
         this.dragLayer.appendChild(sticker);
         this.setActiveSticker(sticker);
 
-        // Delete button listener
         const deleteBtn = sticker.querySelector('.sticker-delete-btn');
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sticker.remove();
-        });
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sticker.remove();
+            });
+        }
     }
 
     makeDraggable(el) {
@@ -84,8 +97,8 @@ class StickerEngine {
             isDragging = true;
             this.setActiveSticker(el);
 
-            startX = e.clientX || e.touches[0].clientX;
-            startY = e.clientY || e.touches[0].clientY;
+            startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+            startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
 
             initialLeft = parseInt(el.style.left, 10) || 0;
             initialTop = parseInt(el.style.top, 10) || 0;
@@ -96,8 +109,8 @@ class StickerEngine {
 
         const onPointerMove = (e) => {
             if (!isDragging) return;
-            const currentX = e.clientX || (e.touches && e.touches[0].clientX);
-            const currentY = e.clientY || (e.touches && e.touches[0].clientY);
+            const currentX = e.clientX || (e.touches && e.touches[0].clientX) || startX;
+            const currentY = e.clientY || (e.touches && e.touches[0].clientY) || startY;
 
             const dx = currentX - startX;
             const dy = currentY - startY;
@@ -116,6 +129,7 @@ class StickerEngine {
     }
 
     setActiveSticker(el) {
+        if (!this.dragLayer) return;
         const allStickers = this.dragLayer.querySelectorAll('.draggable-sticker');
         allStickers.forEach(s => s.classList.remove('active-sticker'));
         if (el) {
@@ -136,7 +150,7 @@ class StickerEngine {
         const clearBtn = document.getElementById('btn-clear-stickers');
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
-                this.dragLayer.innerHTML = '';
+                if (this.dragLayer) this.dragLayer.innerHTML = '';
             });
         }
     }
