@@ -1,8 +1,8 @@
 /* ==========================================================================
-   SnapBooth Studio - Photobooth Canvas Builder (HIGH-RES Edition)
-   Renders custom photobooth strips, borders, themes, headers, footers & dates
+   SnapBooth Studio - Commercial Photobooth Canvas Builder (HIGH-RES Edition)
+   Renders custom photobooth strips, borders, themes, templates, headers, footers & dates
    Supports: 4-Strip, 3-Strip, 2-Duo, 2x2 Grid, 3x2 Grid, Polaroid, 35mm Film Roll
-   Supports: Solid, Film Sprockets, Postage Stamp, Cyber Neon, Polka Dots, Dashed Stitching
+   Supports: Curated Event Templates (Minimal, Y2K, Wedding, Birthday, College, Corporate)
    ========================================================================== */
 
 class PhotoboothCanvasBuilder {
@@ -24,6 +24,174 @@ class PhotoboothCanvasBuilder {
         // High-res scale factor (2x for retina-quality output)
         this.scaleFactor = 2;
 
+        // Commercial Event Customization Branding
+        this.eventBranding = {
+            enabled: false,
+            name: '',
+            date: '',
+            tagline: '',
+            color: '#ec4899'
+        };
+
+        // Undo / Redo History Stack
+        this.history = [];
+        this.historyStep = -1;
+        this.saveState();
+
+        this.render();
+    }
+
+    saveState() {
+        // Limit history to 20 steps
+        if (this.historyStep < this.history.length - 1) {
+            this.history = this.history.slice(0, this.historyStep + 1);
+        }
+        const state = {
+            layout: this.layout,
+            borderStyle: this.borderStyle,
+            frameColor: this.frameColor,
+            padding: this.padding,
+            cornerRadius: this.cornerRadius,
+            headerText: this.headerText,
+            footerText: this.footerText,
+            fontFamily: this.fontFamily,
+            includeDate: this.includeDate,
+            eventBranding: { ...this.eventBranding }
+        };
+        this.history.push(JSON.stringify(state));
+        this.historyStep = this.history.length - 1;
+    }
+
+    undo() {
+        if (this.historyStep > 0) {
+            this.historyStep--;
+            const state = JSON.parse(this.history[this.historyStep]);
+            this.applyState(state);
+            return true;
+        }
+        return false;
+    }
+
+    redo() {
+        if (this.historyStep < this.history.length - 1) {
+            this.historyStep++;
+            const state = JSON.parse(this.history[this.historyStep]);
+            this.applyState(state);
+            return true;
+        }
+        return false;
+    }
+
+    applyState(state) {
+        this.layout = state.layout;
+        this.borderStyle = state.borderStyle;
+        this.frameColor = state.frameColor;
+        this.padding = state.padding;
+        this.cornerRadius = state.cornerRadius;
+        this.headerText = state.headerText;
+        this.footerText = state.footerText;
+        this.fontFamily = state.fontFamily;
+        this.includeDate = state.includeDate;
+        this.eventBranding = state.eventBranding || { enabled: false, name: '', date: '', tagline: '', color: '#ec4899' };
+        this.render();
+    }
+
+    resetDesign() {
+        this.layout = 'strip-4';
+        this.borderStyle = 'solid';
+        this.frameColor = '#FFFFFF';
+        this.padding = 20;
+        this.cornerRadius = 8;
+        this.headerText = 'SNAPBOOTH STUDIO';
+        this.footerText = 'MEMORIES • PHOTOBOOTH';
+        this.fontFamily = "'Caveat', cursive";
+        this.includeDate = true;
+        this.eventBranding = { enabled: false, name: '', date: '', tagline: '', color: '#ec4899' };
+        this.saveState();
+        this.render();
+    }
+
+    // Curated Commercial Event Templates
+    applyTemplate(templateId) {
+        switch (templateId) {
+            case 'minimal':
+                this.layout = 'strip-4';
+                this.borderStyle = 'solid';
+                this.frameColor = '#FFFFFF';
+                this.padding = 24;
+                this.cornerRadius = 0;
+                this.headerText = 'SNAPBOOTH';
+                this.footerText = 'MEMORIES';
+                this.fontFamily = "'Outfit', sans-serif";
+                this.includeDate = true;
+                break;
+            case 'y2k':
+                this.layout = 'strip-4';
+                this.borderStyle = 'neon';
+                this.frameColor = 'pattern-checker';
+                this.padding = 20;
+                this.cornerRadius = 12;
+                this.headerText = 'Y2K VIBES • 2000s';
+                this.footerText = '★ PARTY SNAP ★';
+                this.fontFamily = "'Space Grotesk', sans-serif";
+                this.includeDate = true;
+                break;
+            case 'wedding':
+                this.layout = 'strip-4';
+                this.borderStyle = 'solid';
+                this.frameColor = '#E6E6FA';
+                this.padding = 22;
+                this.cornerRadius = 8;
+                this.headerText = 'OUR WEDDING DAY';
+                this.footerText = 'FOREVER & ALWAYS';
+                this.fontFamily = "'Playfair Display', serif";
+                this.includeDate = true;
+                break;
+            case 'birthday':
+                this.layout = 'strip-4';
+                this.borderStyle = 'dots';
+                this.frameColor = '#FFD1DC';
+                this.padding = 20;
+                this.cornerRadius = 14;
+                this.headerText = 'HAPPY BIRTHDAY';
+                this.footerText = 'BEST DAY EVER 🎉';
+                this.fontFamily = "'Dancing Script', cursive";
+                this.includeDate = true;
+                break;
+            case 'college':
+                this.layout = 'grid-2x2';
+                this.borderStyle = 'stitch';
+                this.frameColor = '#FDFD96';
+                this.padding = 18;
+                this.cornerRadius = 6;
+                this.headerText = 'COLLEGE FEST 2026';
+                this.footerText = 'CAMPUS MEMORIES';
+                this.fontFamily = "'Bebas Neue', sans-serif";
+                this.includeDate = true;
+                break;
+            case 'corporate':
+                this.layout = 'strip-4';
+                this.borderStyle = 'solid';
+                this.frameColor = '#121212';
+                this.padding = 24;
+                this.cornerRadius = 4;
+                this.headerText = 'ANNUAL GALA 2026';
+                this.footerText = 'VIP ACCESS • SNAPBOOTH';
+                this.fontFamily = "'Outfit', sans-serif";
+                this.includeDate = true;
+                break;
+            default:
+                break;
+        }
+        this.saveState();
+        this.render();
+    }
+
+    setEventBranding(branding) {
+        this.eventBranding = { ...this.eventBranding, ...branding, enabled: true };
+        if (branding.name) this.headerText = branding.name;
+        if (branding.tagline) this.footerText = branding.tagline;
+        this.saveState();
         this.render();
     }
 
@@ -34,11 +202,13 @@ class PhotoboothCanvasBuilder {
 
     setLayout(layoutName) {
         this.layout = layoutName;
+        this.saveState();
         this.render();
     }
 
     setBorderStyle(borderStyleName) {
         this.borderStyle = borderStyleName;
+        this.saveState();
         this.render();
     }
 
@@ -46,6 +216,7 @@ class PhotoboothCanvasBuilder {
         this.frameColor = color;
         this.padding = parseInt(padding, 10);
         this.cornerRadius = parseInt(cornerRadius, 10);
+        this.saveState();
         this.render();
     }
 
@@ -54,6 +225,7 @@ class PhotoboothCanvasBuilder {
         this.footerText = footer;
         this.fontFamily = font;
         this.includeDate = includeDate;
+        this.saveState();
         this.render();
     }
 
@@ -146,7 +318,7 @@ class PhotoboothCanvasBuilder {
         this.canvas.width = canvasWidth;
         this.canvas.height = canvasHeight;
 
-        // Scale the CSS display size down while keeping canvas resolution high
+        // Scale CSS display size
         this.canvas.style.width = (canvasWidth / S) + 'px';
         this.canvas.style.height = (canvasHeight / S) + 'px';
 
@@ -163,7 +335,7 @@ class PhotoboothCanvasBuilder {
         // 3. Draw Photos
         this.drawPhotos(photoCoords);
 
-        // 4. Captions & Date
+        // 4. Captions & Date & Event Branding
         this.drawCaptions(canvasWidth, canvasHeight, headerHeight);
 
         if (this.onRenderComplete) {
@@ -306,7 +478,6 @@ class PhotoboothCanvasBuilder {
             const { x, y, w, h } = coord;
             const S = this.scaleFactor;
 
-            // Enable high-quality image smoothing for photo drawing
             this.ctx.imageSmoothingEnabled = true;
             this.ctx.imageSmoothingQuality = 'high';
 
@@ -318,7 +489,6 @@ class PhotoboothCanvasBuilder {
 
             if (this.shots[idx]) {
                 const img = this.shots[idx];
-                // Use cover-fit drawing to prevent stretching
                 const srcW = img.width || img.videoWidth || w;
                 const srcH = img.height || img.videoHeight || h;
                 const srcAspect = srcW / srcH;
@@ -335,22 +505,21 @@ class PhotoboothCanvasBuilder {
 
                 this.ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
             } else {
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
                 this.ctx.fillRect(x, y, w, h);
 
-                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
                 this.ctx.lineWidth = 2 * S;
                 this.ctx.setLineDash([6 * S, 6 * S]);
                 this.ctx.strokeRect(x + 4 * S, y + 4 * S, w - 8 * S, h - 8 * S);
 
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                this.ctx.font = `${22 * S}px "Outfit", sans-serif`;
+                this.ctx.font = `${20 * S}px "Outfit", sans-serif`;
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillText(`📸 Shot #${idx + 1}`, x + (w / 2), y + (h / 2));
             }
 
-            // Thin border around each photo
             this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
             this.ctx.lineWidth = 1 * S;
             this.ctx.setLineDash([]);
@@ -383,7 +552,9 @@ class PhotoboothCanvasBuilder {
             this.ctx.fillText(this.headerText || 'SNAPBOOTH MEMORY', w / 2, captionY);
 
             if (this.includeDate) {
-                const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                const today = this.eventBranding.enabled && this.eventBranding.date
+                    ? this.eventBranding.date
+                    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
                 this.ctx.font = `400 ${16 * S}px ${this.fontFamily}`;
                 this.ctx.fillText(today, w / 2, captionY + 30 * S);
             }
@@ -393,7 +564,9 @@ class PhotoboothCanvasBuilder {
             this.ctx.fillText(this.footerText, w / 2, footerY);
 
             if (this.includeDate) {
-                const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                const today = this.eventBranding.enabled && this.eventBranding.date
+                    ? this.eventBranding.date
+                    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
                 this.ctx.font = `400 ${13 * S}px 'Space Grotesk', sans-serif`;
                 this.ctx.fillStyle = (textColor === '#f8fafc') ? '#94a3b8' : '#64748b';
                 this.ctx.fillText(`• ${today} •`, w / 2, footerY + 22 * S);
