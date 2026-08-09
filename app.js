@@ -278,32 +278,35 @@ const initApp = () => {
         if (camera) camera.setFilter(filterName);
     });
 
-    // File Upload Fallback
-    const fileUploadInput = document.getElementById('file-upload-input');
-    if (fileUploadInput) {
-        fileUploadInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length === 0) return;
+    // File Upload Handler (Landing Hero & View 2 Capture & Fallback)
+    const uploadInputs = ['file-upload-input', 'capture-file-upload', 'fallback-file-upload', 'capture-file-upload-main'];
+    uploadInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
 
-            capturedShots = [];
-            let loadedCount = 0;
+                capturedShots = [];
+                let loadedCount = 0;
 
-            files.forEach(file => {
-                const img = new Image();
-                img.onload = () => {
-                    capturedShots.push(img);
-                    loadedCount++;
-                    if (loadedCount === files.length) {
-                        if (canvasBuilder) canvasBuilder.setShots(capturedShots);
-                        renderShotsTray();
-                        showView('editor');
-                        window.toast?.success(`${files.length} photo(s) uploaded!`);
-                    }
-                };
-                img.src = URL.createObjectURL(file);
+                files.forEach(file => {
+                    const img = new Image();
+                    img.onload = () => {
+                        capturedShots.push(img);
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            if (canvasBuilder) canvasBuilder.setShots(capturedShots);
+                            renderShotsTray();
+                            showView('editor');
+                            window.toast?.success(`${files.length} photo(s) uploaded!`);
+                        }
+                    };
+                    img.src = URL.createObjectURL(file);
+                });
             });
-        });
-    }
+        }
+    });
 
     // Layout Selector Cards (Synced across View 2 Capture & View 3 Editor)
     document.querySelectorAll('.layout-card').forEach(card => {

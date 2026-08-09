@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SnapBooth • Digital Photobooth Platform</title>
     <meta name="description"
-        content="Professional digital photobooth software for laptops, mobile, weddings, festivals, corporate events, and parties. Capture photo strips, GIFs, and custom branded memories.">
+        content="Professional digital photobooth software for laptops, phones, tablets, weddings, festivals, corporate events, and parties. Capture photo strips, GIFs, and custom branded memories.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,7 +90,7 @@
                 <h1>SNAPBOOTH</h1>
                 <p class="hero-subtitle">
                     <strong>Capture. Customize. Share.</strong><br>
-                    Create beautiful photo strips, GIFs, and custom event memories in seconds on laptop, mobile, or desktop.
+                    Create beautiful photo strips, GIFs, and custom event memories in seconds on any laptop, tablet, or phone.
                 </p>
 
                 <div class="hero-cta-group">
@@ -108,14 +108,14 @@
 
                 <div class="landing-features-grid">
                     <div class="feature-card">
-                        <div class="feature-icon"><i class="fa-solid fa-laptop"></i></div>
-                        <h3>Laptop & Mobile Ready</h3>
-                        <p>Works smoothly on laptop webcams, desktop browsers, tablets, and phones with fallback stream support.</p>
+                        <div class="feature-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                        <h3>Works on All Devices</h3>
+                        <p>Optimized for mobile phones, tablets, laptops, and desktop kiosks with touch controls.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fa-solid fa-border-all"></i></div>
-                        <h3>Integrated Layouts</h3>
-                        <p>Select your photo strip, grid, or polaroid layout directly alongside the live camera feed.</p>
+                        <h3>Capture & Layout Studio</h3>
+                        <p>Select your photo strip layout directly beside the live viewfinder before shooting.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
@@ -129,7 +129,7 @@
         <!-- VIEW 2: COMBINED CAPTURE & LAYOUT STUDIO VIEW -->
         <section id="view-capture" class="view-panel hidden">
             <div class="studio-grid">
-                <!-- Left: Viewfinder, Shutter Controls, Filters & Layout Selection -->
+                <!-- Left: Viewfinder, Shutter Controls, Layout Selector & Upload Options -->
                 <div class="card-surface">
                     <div class="card-header-clean">
                         <div class="status-pill">
@@ -137,6 +137,10 @@
                             <span id="camera-status-text">Camera Ready</span>
                         </div>
                         <div class="camera-controls-mini">
+                            <label for="capture-file-upload" class="icon-btn" title="Upload Photos from File">
+                                <i class="fa-solid fa-upload"></i>
+                                <input type="file" id="capture-file-upload" accept="image/*" multiple hidden>
+                            </label>
                             <button id="btn-toggle-camera-power" class="icon-btn active-power" title="Turn Camera On/Off">
                                 <i class="fa-solid fa-power-off"></i>
                             </button>
@@ -165,7 +169,7 @@
                         <!-- Fallback message if no camera -->
                         <div id="camera-fallback" class="camera-fallback hidden">
                             <i class="fa-solid fa-video-slash"></i>
-                            <p id="fallback-status-text">Laptop camera offline. Click "Virtual Demo Stream" or "Turn On Camera" below!</p>
+                            <p id="fallback-status-text">Laptop camera offline. Click "Virtual Demo Stream" or Upload Photos below!</p>
                             <div class="fallback-btn-group" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
                                 <button id="btn-request-camera" class="btn btn-primary btn-sm">
                                     <i class="fa-solid fa-camera"></i> Turn On Camera
@@ -173,11 +177,15 @@
                                 <button id="btn-virtual-demo" class="btn btn-accent btn-sm">
                                     <i class="fa-solid fa-play"></i> Virtual Demo Stream
                                 </button>
+                                <label for="fallback-file-upload" class="btn btn-secondary btn-sm">
+                                    <i class="fa-solid fa-upload"></i> Upload Photos
+                                    <input type="file" id="fallback-file-upload" accept="image/*" multiple hidden>
+                                </label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Shutter Controls Bar -->
+                    <!-- Shutter Controls & Upload Bar -->
                     <div class="capture-controls-clean">
                         <div class="timer-selector">
                             <select id="timer-delay-select" class="select-input btn-sm">
@@ -191,15 +199,20 @@
                             <i class="fa-solid fa-camera"></i> TAKE PHOTO
                         </button>
 
+                        <label for="capture-file-upload-main" class="btn btn-secondary btn-sm" title="Upload Photos from device">
+                            <i class="fa-solid fa-upload"></i> Upload
+                            <input type="file" id="capture-file-upload-main" accept="image/*" multiple hidden>
+                        </label>
+
                         <button id="btn-magic-snap-capture" class="btn-magic-snap" title="Automated Magic Capture">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> MAGIC SNAP
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> MAGIC
                         </button>
                     </div>
 
-                    <!-- Layout Cards Selector directly in View 2 -->
+                    <!-- Exclusive Layout Cards Selector (View 2 ONLY) -->
                     <div class="filter-section-clean" style="margin-top: 18px;">
                         <div class="section-label"><i class="fa-solid fa-border-all"></i> Select Layout</div>
-                        <div class="layout-cards-grid" style="grid-template-columns: repeat(4, 1fr); gap: 8px;" id="capture-layout-bar">
+                        <div class="layout-cards-grid" id="capture-layout-bar">
                             <button class="layout-card active" data-layout="strip-4">
                                 <span>4 Strip</span>
                             </button>
@@ -253,7 +266,7 @@
                     </div>
                 </div>
 
-                <!-- Right: Shot Manager & Live Strip Preview -->
+                <!-- Right: Shot Manager Tray -->
                 <div class="card-surface">
                     <div class="card-header-clean">
                         <h3><i class="fa-solid fa-images"></i> YOUR PHOTOS</h3>
@@ -262,7 +275,7 @@
 
                     <div class="shots-tray-container">
                         <div class="shots-tray" id="shots-tray">
-                            <p class="empty-tray-text">No photos taken yet. Tap "TAKE PHOTO" to begin!</p>
+                            <p class="empty-tray-text">No photos taken yet. Tap "TAKE PHOTO" or "Upload" to begin!</p>
                         </div>
                     </div>
 
@@ -278,16 +291,13 @@
             </div>
         </section>
 
-        <!-- VIEW 3: EDITOR / CUSTOMIZATION VIEW -->
+        <!-- VIEW 3: EDITOR / CUSTOMIZATION VIEW (Themes, Frames, Stickers, Text, Branding) -->
         <section id="view-editor" class="view-panel hidden">
             <div class="editor-grid">
-                <!-- Left: Studio Toolbar Controls -->
+                <!-- Left: Studio Toolbar Controls (Layouts removed, exclusive in View 2) -->
                 <div class="editor-toolbar-card">
                     <div class="tabs-header">
-                        <button class="tab-btn active" data-tab="tab-layout">
-                            <i class="fa-solid fa-border-all"></i> LAYOUTS
-                        </button>
-                        <button class="tab-btn" data-tab="tab-templates">
+                        <button class="tab-btn active" data-tab="tab-templates">
                             <i class="fa-solid fa-sparkles"></i> THEMES
                         </button>
                         <button class="tab-btn" data-tab="tab-frame">
@@ -306,35 +316,8 @@
 
                     <!-- Tab Panes -->
                     <div class="tab-content-container">
-                        <!-- Tab 1: Visual Layout Cards -->
-                        <div id="tab-layout" class="tab-pane active">
-                            <div class="layout-cards-grid">
-                                <button class="layout-card active" data-layout="strip-4">
-                                    <span>4 Photo Strip</span>
-                                </button>
-                                <button class="layout-card" data-layout="strip-3">
-                                    <span>3 Photo Strip</span>
-                                </button>
-                                <button class="layout-card" data-layout="strip-2">
-                                    <span>2 Photo Strip</span>
-                                </button>
-                                <button class="layout-card" data-layout="grid-2x2">
-                                    <span>2x2 Grid</span>
-                                </button>
-                                <button class="layout-card" data-layout="grid-3x2">
-                                    <span>6 Photo Grid</span>
-                                </button>
-                                <button class="layout-card" data-layout="polaroid">
-                                    <span>Polaroid Snap</span>
-                                </button>
-                                <button class="layout-card" data-layout="film-roll">
-                                    <span>35mm Film</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Tab 2: Preset Commercial Templates -->
-                        <div id="tab-templates" class="tab-pane">
+                        <!-- Tab 1: Preset Commercial Themes -->
+                        <div id="tab-templates" class="tab-pane active">
                             <div class="templates-grid">
                                 <div class="template-item-card" data-template="minimal">
                                     <h4>MINIMAL</h4>
@@ -342,28 +325,32 @@
                                 </div>
                                 <div class="template-item-card" data-template="y2k">
                                     <h4>Y2K RETRO</h4>
-                                    <p>Checkerboard & neon</p>
+                                    <p>Cyber & neon glow</p>
                                 </div>
                                 <div class="template-item-card" data-template="wedding">
-                                    <h4>WEDDING</h4>
-                                    <p>Serif typography & gold</p>
+                                    <h4>WEDDING GALA</h4>
+                                    <p>Champagne gold & script</p>
                                 </div>
                                 <div class="template-item-card" data-template="birthday">
-                                    <h4>BIRTHDAY</h4>
-                                    <p>Pastel pink & script</p>
+                                    <h4>BIRTHDAY PARTY</h4>
+                                    <p>Pastel pink & polka dots</p>
+                                </div>
+                                <div class="template-item-card" data-template="bollywood">
+                                    <h4>BOLLYWOOD DRAMA</h4>
+                                    <p>Royal magenta & gold</p>
                                 </div>
                                 <div class="template-item-card" data-template="college">
                                     <h4>COLLEGE FEST</h4>
-                                    <p>Bold headline style</p>
+                                    <p>Electric violet headline</p>
                                 </div>
                                 <div class="template-item-card" data-template="corporate">
-                                    <h4>CORPORATE</h4>
-                                    <p>Sleek onyx black</p>
+                                    <h4>CORPORATE VIP</h4>
+                                    <p>Onyx black luxury</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tab 3: Borders & Frames -->
+                        <!-- Tab 2: Borders & Frames -->
                         <div id="tab-frame" class="tab-pane">
                             <div class="option-group" style="margin-bottom: 16px;">
                                 <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Frame Style:</label>
@@ -389,7 +376,7 @@
                             </div>
                         </div>
 
-                        <!-- Tab 4: Interactive Stickers -->
+                        <!-- Tab 3: Interactive Stickers -->
                         <div id="tab-stickers" class="tab-pane">
                             <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:10px;"><i class="fa-solid fa-hand-pointer"></i> Tap a sticker to add. Drag, rotate, scale or delete using handles:</p>
                             <div class="sticker-grid" id="sticker-grid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; font-size:1.8rem; cursor:pointer;">
@@ -400,7 +387,7 @@
                             </button>
                         </div>
 
-                        <!-- Tab 5: Text & Typography -->
+                        <!-- Tab 4: Text & Typography -->
                         <div id="tab-text" class="tab-pane">
                             <div style="display:flex; flex-direction:column; gap:10px;">
                                 <div>
@@ -428,7 +415,7 @@
                             </div>
                         </div>
 
-                        <!-- Tab 6: Commercial Event Branding -->
+                        <!-- Tab 5: Commercial Event Branding -->
                         <div id="tab-branding" class="tab-pane">
                             <div style="display:flex; flex-direction:column; gap:10px;">
                                 <div>

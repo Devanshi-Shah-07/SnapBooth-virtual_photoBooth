@@ -576,6 +576,71 @@ class PhotoboothCanvasBuilder {
         this.ctx.restore();
     }
 
+    applyTemplate(templateId) {
+        switch (templateId) {
+            case 'minimal':
+                this.borderStyle = 'solid';
+                this.frameColor = '#FFFFFF';
+                this.fontFamily = "'Outfit', sans-serif";
+                this.headerText = 'SNAPBOOTH STUDIO';
+                this.footerText = 'MEMORIES • MINIMALIST';
+                break;
+
+            case 'y2k':
+                this.borderStyle = 'neon';
+                this.frameColor = 'pattern-checker';
+                this.fontFamily = "'Space Grotesk', sans-serif";
+                this.headerText = '★ Y2K RETRO VIBES ★';
+                this.footerText = 'CYBER MEMORIES 2000';
+                break;
+
+            case 'wedding':
+                this.borderStyle = 'solid';
+                this.frameColor = '#FEF3C7';
+                this.fontFamily = "'Dancing Script', cursive";
+                this.headerText = 'SMRITI & ROHAN';
+                this.footerText = 'CELEBRATING FOREVER LOVE';
+                break;
+
+            case 'birthday':
+                this.borderStyle = 'dots';
+                this.frameColor = '#FFD1DC';
+                this.fontFamily = "'Caveat', cursive";
+                this.headerText = 'HAPPY BIRTHDAY! 🎉';
+                this.footerText = 'BEST DAY EVER';
+                break;
+
+            case 'bollywood':
+                this.borderStyle = 'solid';
+                this.frameColor = '#F59E0B';
+                this.fontFamily = "'Bebas Neue', sans-serif";
+                this.headerText = 'BOLLYWOOD NIGHT';
+                this.footerText = 'STAR OF THE SHOW';
+                break;
+
+            case 'college':
+                this.borderStyle = 'stitch';
+                this.frameColor = '#E6E6FA';
+                this.fontFamily = "'Space Grotesk', sans-serif";
+                this.headerText = 'COLLEGE FEST 2026';
+                this.footerText = 'CAMPUS MEMORIES';
+                break;
+
+            case 'corporate':
+                this.borderStyle = 'solid';
+                this.frameColor = '#121212';
+                this.fontFamily = "'Outfit', sans-serif";
+                this.headerText = 'CORPORATE GALA VIP';
+                this.footerText = 'EXCELLENCE & MEMORIES';
+                break;
+
+            default:
+                break;
+        }
+        this.saveState();
+        this.render();
+    }
+
     toHighResDataURL() {
         return this.canvas.toDataURL('image/png', 1.0);
     }
