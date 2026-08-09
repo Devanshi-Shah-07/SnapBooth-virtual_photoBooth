@@ -428,11 +428,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Direct Print Setup
+    // Direct Print & Print Size Modal Setup
     document.getElementById('btn-direct-print')?.addEventListener('click', () => {
         const printArea = document.getElementById('printable-area');
         if (!printArea) return;
         printArea.innerHTML = `<img src="${canvasBuilder.toHighResDataURL()}" alt="Photobooth Print">`;
+        window.toast?.info('Opening print dialog...');
+        setTimeout(() => window.print(), 300);
+    });
+
+    document.getElementById('btn-trigger-print-now')?.addEventListener('click', () => {
+        const printArea = document.getElementById('printable-area');
+        if (!printArea) return;
+        printArea.innerHTML = `<img src="${canvasBuilder.toHighResDataURL()}" alt="Photobooth Print">`;
+        document.getElementById('print-size-modal')?.classList.add('hidden');
         window.toast?.info('Opening print dialog...');
         setTimeout(() => window.print(), 300);
     });

@@ -143,3 +143,4 @@ class StickerEngine {
 }
 
 window.StickerEngine = StickerEngine;
+window.StickerManager = StickerEngine;
