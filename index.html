@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapBooth • Commercial Digital Photobooth Platform</title>
+    <title>SnapBooth • Digital Photobooth Platform</title>
     <meta name="description"
         content="Professional digital photobooth software for weddings, festivals, corporate events, and parties. Capture photo strips, GIFs, and custom branded memories.">
 
@@ -31,12 +31,12 @@
     <!-- Main Container -->
     <div class="app-container">
         <!-- Header / Navigation -->
-        <header class="app-header">
+        <header class="app-header" id="app-header">
             <div class="logo" id="header-logo-home">
                 <div class="logo-icon"><i class="fa-solid fa-camera-retro"></i></div>
                 <div class="logo-text">
                     <h1>SnapBooth <span>Studio</span></h1>
-                    <p class="tagline">Commercial Digital Photobooth</p>
+                    <p class="tagline">Digital Photobooth Platform</p>
                 </div>
             </div>
 
@@ -61,12 +61,15 @@
             </nav>
 
             <div class="header-actions">
+                <button id="btn-toggle-kiosk" class="btn btn-ghost btn-sm" title="Toggle Event Kiosk Mode">
+                    <i class="fa-solid fa-tv"></i> <span>Kiosk</span>
+                </button>
                 <button id="btn-open-settings" class="icon-btn" title="Settings">
                     <i class="fa-solid fa-gear"></i>
                 </button>
                 <button id="btn-session-gallery" class="btn btn-secondary btn-sm" onclick="document.getElementById('gallery-modal').classList.remove('hidden')">
                     <i class="fa-solid fa-images"></i>
-                    <span>Gallery</span>
+                    <span>YOUR MEMORIES</span>
                     <span id="gallery-count-badge" class="badge">0</span>
                 </button>
                 <button id="btn-enable-cam" class="btn btn-primary btn-sm" title="Toggle Camera Power">
@@ -82,11 +85,11 @@
         <section id="view-landing" class="view-panel">
             <div class="landing-hero">
                 <div class="hero-pill">
-                    <i class="fa-solid fa-sparkles"></i> Commercial Digital Photobooth Experience
+                    <i class="fa-solid fa-sparkles"></i> Make a memory worth keeping
                 </div>
                 <h1>SNAPBOOTH</h1>
                 <p class="hero-subtitle">
-                    Your memories. Your style. Your moment.<br>
+                    <strong>Capture. Customize. Share.</strong><br>
                     Create beautiful photo strips, GIFs, and custom event memories in seconds.
                 </p>
 
@@ -98,7 +101,7 @@
                         <i class="fa-solid fa-wand-magic-sparkles"></i> MAGIC SNAP
                     </button>
                     <label for="file-upload-input" class="btn btn-secondary btn-lg">
-                        <i class="fa-solid fa-upload"></i> Upload Photos
+                        <i class="fa-solid fa-upload"></i> UPLOAD PHOTOS
                         <input type="file" id="file-upload-input" accept="image/*" multiple hidden>
                     </label>
                 </div>
@@ -107,17 +110,17 @@
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fa-solid fa-sliders"></i></div>
                         <h3>Event Customization</h3>
-                        <p>Customize event names, dates, custom brand logos, and colors for weddings, college fests, and galas.</p>
+                        <p>Customize event titles, dates, logos, and brand colors for weddings, college fests, and galas.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fa-solid fa-print"></i></div>
                         <h3>High-Res Print Engine</h3>
-                        <p>300 DPI high-resolution export ready for instant physical photo strip printers & framing.</p>
+                        <p>300 DPI high-resolution export ready for physical photo strip printers & framing.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                        <h3>100% Private & Local</h3>
-                        <p>All photo captures remain strictly inside your browser's high-capacity database. Zero cloud uploads.</p>
+                        <h3>100% On-Device Privacy</h3>
+                        <p>Your photos stay 100% on your device inside browser storage. Zero cloud uploads.</p>
                     </div>
                 </div>
             </div>
@@ -155,7 +158,7 @@
 
                         <!-- Photobooth Shot Counter Overlay -->
                         <div id="shot-progress-overlay" class="shot-progress-overlay hidden">
-                            <div id="shot-progress-text">Shot 1 of 4</div>
+                            <div id="shot-progress-text">Photo 1 of 4</div>
                             <div class="shot-dots" id="shot-dots"></div>
                         </div>
 
@@ -193,40 +196,54 @@
                         </button>
                     </div>
 
-                    <!-- Filter Selector Chips -->
+                    <!-- Visual Filter Cards Carousel -->
                     <div class="filter-section-clean">
                         <div class="section-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Filters</div>
                         <div class="filter-chips-wrapper" id="filter-bar">
-                            <button class="filter-chip active" data-filter="normal">Normal</button>
-                            <button class="filter-chip" data-filter="vintage">90s Vintage</button>
-                            <button class="filter-chip" data-filter="bw">Noir B&W</button>
-                            <button class="filter-chip" data-filter="sepia">Sepia Warm</button>
-                            <button class="filter-chip" data-filter="cyber">Cyber Neon</button>
-                            <button class="filter-chip" data-filter="golden">Golden Hour</button>
-                            <button class="filter-chip" data-filter="pastel">Soft Pastel</button>
+                            <button class="filter-chip active" data-filter="normal">
+                                <span class="chip-dot" style="background:#fff; border:1px solid #ccc;"></span> Original
+                            </button>
+                            <button class="filter-chip" data-filter="vintage">
+                                <span class="chip-dot" style="background:#f59e0b;"></span> Vintage
+                            </button>
+                            <button class="filter-chip" data-filter="bw">
+                                <span class="chip-dot" style="background:#111;"></span> B&W
+                            </button>
+                            <button class="filter-chip" data-filter="sepia">
+                                <span class="chip-dot" style="background:#b45309;"></span> Warm
+                            </button>
+                            <button class="filter-chip" data-filter="cyber">
+                                <span class="chip-dot" style="background:#06b6d4;"></span> Y2K Neon
+                            </button>
+                            <button class="filter-chip" data-filter="golden">
+                                <span class="chip-dot" style="background:#eab308;"></span> Golden
+                            </button>
+                            <button class="filter-chip" data-filter="pastel">
+                                <span class="chip-dot" style="background:#f472b6;"></span> Soft Pastel
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right: Shot Manager & Workflow Step -->
+                <!-- Right: Shot Manager & Session Tray -->
                 <div class="card-surface">
                     <div class="card-header-clean">
-                        <h3><i class="fa-solid fa-images"></i> Shot Session</h3>
+                        <h3><i class="fa-solid fa-images"></i> YOUR PHOTOS</h3>
                         <span id="shots-count-text" class="text-subtle">0 photos taken</span>
                     </div>
 
                     <div class="shots-tray-container">
                         <div class="shots-tray" id="shots-tray">
-                            <p class="empty-tray-text">No shots taken yet. Tap "TAKE PHOTO" to begin!</p>
+                            <p class="empty-tray-text">No photos taken yet. Tap "TAKE PHOTO" to begin!</p>
                         </div>
                     </div>
 
                     <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
                         <button id="btn-proceed-to-customize" class="btn btn-primary btn-lg" style="width: 100%;">
-                            <span>Proceed to Customization</span> <i class="fa-solid fa-arrow-right"></i>
+                            <span>Proceed to Customize</span> <i class="fa-solid fa-arrow-right"></i>
                         </button>
                         <button id="btn-retake-all" class="btn btn-ghost btn-sm" style="width: 100%;">
-                            <i class="fa-solid fa-trash-can"></i> Clear Session Shots
+                            <i class="fa-solid fa-trash-can"></i> Clear Session Photos
                         </button>
                     </div>
                 </div>
@@ -240,44 +257,44 @@
                 <div class="editor-toolbar-card">
                     <div class="tabs-header">
                         <button class="tab-btn active" data-tab="tab-layout">
-                            <i class="fa-solid fa-border-all"></i> Layout
+                            <i class="fa-solid fa-border-all"></i> LAYOUTS
                         </button>
                         <button class="tab-btn" data-tab="tab-templates">
-                            <i class="fa-solid fa-sparkles"></i> Themes
+                            <i class="fa-solid fa-sparkles"></i> THEMES
                         </button>
                         <button class="tab-btn" data-tab="tab-frame">
-                            <i class="fa-solid fa-palette"></i> Frame
+                            <i class="fa-solid fa-palette"></i> FRAMES
                         </button>
                         <button class="tab-btn" data-tab="tab-stickers">
-                            <i class="fa-solid fa-face-smile"></i> Stickers
+                            <i class="fa-solid fa-face-smile"></i> STICKERS
                         </button>
                         <button class="tab-btn" data-tab="tab-text">
-                            <i class="fa-solid fa-font"></i> Text
+                            <i class="fa-solid fa-font"></i> TEXT
                         </button>
                         <button class="tab-btn" data-tab="tab-branding">
-                            <i class="fa-solid fa-building"></i> Branding
+                            <i class="fa-solid fa-building"></i> BRANDING
                         </button>
                     </div>
 
                     <!-- Tab Panes -->
                     <div class="tab-content-container">
-                        <!-- Tab 1: Layout Selector Cards -->
+                        <!-- Tab 1: Visual Layout Cards -->
                         <div id="tab-layout" class="tab-pane active">
                             <div class="layout-cards-grid">
                                 <button class="layout-card active" data-layout="strip-4">
-                                    <span>4-Photo Strip</span>
+                                    <span>4 Photo Strip</span>
                                 </button>
                                 <button class="layout-card" data-layout="strip-3">
-                                    <span>3-Photo Strip</span>
+                                    <span>3 Photo Strip</span>
                                 </button>
                                 <button class="layout-card" data-layout="strip-2">
-                                    <span>2-Duo Strip</span>
+                                    <span>2 Photo Strip</span>
                                 </button>
                                 <button class="layout-card" data-layout="grid-2x2">
                                     <span>2x2 Grid</span>
                                 </button>
                                 <button class="layout-card" data-layout="grid-3x2">
-                                    <span>6-Party Grid</span>
+                                    <span>6 Photo Grid</span>
                                 </button>
                                 <button class="layout-card" data-layout="polaroid">
                                     <span>Polaroid Snap</span>
@@ -292,27 +309,27 @@
                         <div id="tab-templates" class="tab-pane">
                             <div class="templates-grid">
                                 <div class="template-item-card" data-template="minimal">
-                                    <h4>Minimalist</h4>
+                                    <h4>MINIMAL</h4>
                                     <p>Clean editorial style</p>
                                 </div>
                                 <div class="template-item-card" data-template="y2k">
-                                    <h4>Y2K Retro</h4>
+                                    <h4>Y2K RETRO</h4>
                                     <p>Checkerboard & neon</p>
                                 </div>
                                 <div class="template-item-card" data-template="wedding">
-                                    <h4>Wedding Gala</h4>
-                                    <p>Elegant serif typography</p>
+                                    <h4>WEDDING</h4>
+                                    <p>Serif typography & gold</p>
                                 </div>
                                 <div class="template-item-card" data-template="birthday">
-                                    <h4>Birthday Party</h4>
-                                    <p>Pastel pink & confetti</p>
+                                    <h4>BIRTHDAY</h4>
+                                    <p>Pastel pink & script</p>
                                 </div>
                                 <div class="template-item-card" data-template="college">
-                                    <h4>College Fest</h4>
-                                    <p>Bold headline typography</p>
+                                    <h4>COLLEGE FEST</h4>
+                                    <p>Bold headline style</p>
                                 </div>
                                 <div class="template-item-card" data-template="corporate">
-                                    <h4>Corporate VIP</h4>
+                                    <h4>CORPORATE</h4>
                                     <p>Sleek onyx black</p>
                                 </div>
                             </div>
@@ -321,7 +338,7 @@
                         <!-- Tab 3: Borders & Frames -->
                         <div id="tab-frame" class="tab-pane">
                             <div class="option-group" style="margin-bottom: 16px;">
-                                <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Border Decorator:</label>
+                                <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Frame Style:</label>
                                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;" id="border-style-selector">
                                     <button class="filter-chip active" data-border="solid">Classic Solid</button>
                                     <button class="filter-chip" data-border="film">35mm Sprockets</button>
@@ -339,14 +356,14 @@
                                     <button class="color-swatch" data-color="#121212" style="width:28px; height:28px; border-radius:50%; background:#121212; border:1px solid #ccc; cursor:pointer;"></button>
                                     <button class="color-swatch" data-color="#FFD1DC" style="width:28px; height:28px; border-radius:50%; background:#FFD1DC; border:1px solid #ccc; cursor:pointer;"></button>
                                     <button class="color-swatch" data-color="#E6E6FA" style="width:28px; height:28px; border-radius:50%; background:#E6E6FA; border:1px solid #ccc; cursor:pointer;"></button>
-                                    <button class="color-swatch" data-color="#pattern-checker" style="width:28px; height:28px; border-radius:50%; background:repeating-conic-gradient(#000 0% 25%, #fff 0% 50%) 50% / 8px 8px; border:1px solid #ccc; cursor:pointer;"></button>
+                                    <button class="color-swatch" data-color="pattern-checker" style="width:28px; height:28px; border-radius:50%; background:repeating-conic-gradient(#000 0% 25%, #fff 0% 50%) 50% / 8px 8px; border:1px solid #ccc; cursor:pointer;"></button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tab 4: Stickers -->
+                        <!-- Tab 4: Interactive Stickers -->
                         <div id="tab-stickers" class="tab-pane">
-                            <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:10px;"><i class="fa-solid fa-hand-pointer"></i> Tap a sticker to place on photo strip canvas:</p>
+                            <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:10px;"><i class="fa-solid fa-hand-pointer"></i> Tap a sticker to add. Drag, rotate, scale or delete using handles:</p>
                             <div class="sticker-grid" id="sticker-grid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; font-size:1.8rem; cursor:pointer;">
                                 <!-- Dynamically populated stickers -->
                             </div>
@@ -355,11 +372,11 @@
                             </button>
                         </div>
 
-                        <!-- Tab 5: Text & Fonts -->
+                        <!-- Tab 5: Text & Typography -->
                         <div id="tab-text" class="tab-pane">
                             <div style="display:flex; flex-direction:column; gap:10px;">
                                 <div>
-                                    <label style="font-size:0.78rem; font-weight:700;">Header Text:</label>
+                                    <label style="font-size:0.78rem; font-weight:700;">Title Text:</label>
                                     <input type="text" id="input-header-text" value="SNAPBOOTH STUDIO" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--border);">
                                 </div>
                                 <div>
@@ -431,7 +448,7 @@
         <section id="view-result" class="view-panel hidden">
             <div class="result-screen-container">
                 <div class="result-header">
-                    <h2>YOUR MEMORY IS READY ✨</h2>
+                    <h2>✨ YOUR MEMORY IS READY</h2>
                     <p style="color:var(--text-muted);">Save, print, or share your photobooth creation instantly.</p>
                 </div>
 
@@ -442,45 +459,50 @@
 
                     <div class="result-actions-card">
                         <button id="btn-download-png" class="btn btn-primary btn-lg" style="width:100%;">
-                            <i class="fa-solid fa-download"></i> Save High-Res PNG (300 DPI)
+                            <i class="fa-solid fa-download"></i> DOWNLOAD PNG
                         </button>
                         <button id="btn-download-gif" class="btn btn-accent btn-lg" style="width:100%;">
-                            <i class="fa-solid fa-film"></i> Save Animated GIF
+                            <i class="fa-solid fa-film"></i> CREATE GIF
                         </button>
                         <button id="btn-direct-print" class="btn btn-secondary btn-lg" style="width:100%;">
-                            <i class="fa-solid fa-print"></i> Print Photo Strip
+                            <i class="fa-solid fa-print"></i> PRINT PHOTO
                         </button>
                         <button id="btn-open-qr-share" class="btn btn-secondary btn-lg" style="width:100%;">
-                            <i class="fa-solid fa-qrcode"></i> Share & QR Code
+                            <i class="fa-solid fa-qrcode"></i> SHARE & QR CODE
                         </button>
                         <button id="btn-save-to-gallery" class="btn btn-secondary btn-lg" style="width:100%;">
-                            <i class="fa-solid fa-bookmark"></i> Save to Gallery
+                            <i class="fa-solid fa-bookmark"></i> SAVE TO MEMORIES
                         </button>
                         <button id="btn-restart-photobooth" class="btn btn-ghost btn-sm" style="width:100%; margin-top:8px;">
-                            <i class="fa-solid fa-rotate"></i> Take Another Photo
+                            <i class="fa-solid fa-rotate"></i> TAKE ANOTHER PHOTO
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- MODAL 1: SESSION GALLERY MODAL -->
+        <!-- MODAL 1: MEMORIES GALLERY MODAL -->
         <div id="gallery-modal" class="modal-backdrop hidden">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-images"></i> Photobooth Memory Gallery</h2>
+                    <h2><i class="fa-solid fa-images"></i> YOUR MEMORIES</h2>
                     <button class="modal-close-btn" onclick="document.getElementById('gallery-modal').classList.add('hidden')">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="gallery-filter-tabs">
-                        <button class="filter-chip active" data-gcat="all">All Items</button>
-                        <button class="filter-chip" data-gcat="strips">Photo Strips</button>
-                        <button class="filter-chip" data-gcat="gifs">GIFs</button>
+                        <button class="filter-chip active" data-gcat="all">ALL</button>
+                        <button class="filter-chip" data-gcat="favorites">FAVORITES</button>
+                        <button class="filter-chip" data-gcat="strips">STRIPS</button>
+                        <button class="filter-chip" data-gcat="gifs">GIFS</button>
                     </div>
                     <div id="gallery-grid" class="gallery-grid"></div>
                     <div id="gallery-empty" style="text-align:center; padding:40px; color:var(--text-muted);">
                         <i class="fa-solid fa-box-open" style="font-size:2.5rem; margin-bottom:10px;"></i>
-                        <p>No photobooth strips saved yet.</p>
+                        <h3>No memories yet</h3>
+                        <p style="margin-bottom:16px;">Your creations will appear here.</p>
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('gallery-modal').classList.add('hidden'); document.getElementById('nav-btn-capture').click();">
+                            TAKE YOUR FIRST PHOTO
+                        </button>
                     </div>
                 </div>
             </div>
@@ -490,19 +512,19 @@
         <div id="print-size-modal" class="modal-backdrop hidden">
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-print"></i> Select Print Size</h2>
+                    <h2><i class="fa-solid fa-print"></i> MAKE IT REAL</h2>
                     <button class="modal-close-btn" onclick="document.getElementById('print-size-modal').classList.add('hidden')">&times;</button>
                 </div>
                 <div class="modal-body" style="text-align:center;">
-                    <p style="margin-bottom:20px; color:var(--text-muted);">Choose your paper print format:</p>
+                    <p style="margin-bottom:20px; color:var(--text-muted);">Choose your physical print paper format:</p>
                     <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; margin-bottom:20px;">
-                        <button class="btn btn-secondary btn-lg" id="print-size-2x6">2" × 6" Photobooth Strip</button>
-                        <button class="btn btn-secondary btn-lg" id="print-size-4x6">4" × 6" Postcard</button>
-                        <button class="btn btn-secondary btn-lg" id="print-size-4x4">4" × 4" Square Mini</button>
-                        <button class="btn btn-secondary btn-lg" id="print-size-wallet">2.5" × 3.5" Wallet Pair</button>
+                        <button class="btn btn-secondary btn-lg" id="print-size-2x6">2 × 6 STRIP</button>
+                        <button class="btn btn-secondary btn-lg" id="print-size-4x6">4 × 6 POSTCARD</button>
+                        <button class="btn btn-secondary btn-lg" id="print-size-4x4">4 × 4 SQUARE</button>
+                        <button class="btn btn-secondary btn-lg" id="print-size-wallet">WALLET PAIR</button>
                     </div>
                     <button id="btn-trigger-print-now" class="btn btn-primary btn-lg" style="width:100%;">
-                        <i class="fa-solid fa-print"></i> Print Now
+                        <i class="fa-solid fa-print"></i> PRINT NOW (300 DPI)
                     </button>
                 </div>
             </div>
@@ -512,14 +534,14 @@
         <div id="qr-share-modal" class="modal-backdrop hidden">
             <div class="modal-content" style="max-width: 480px; text-align:center;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-qrcode"></i> Scan to Save on Phone</h2>
+                    <h2><i class="fa-solid fa-qrcode"></i> SCAN TO GET YOUR PHOTO</h2>
                     <button class="modal-close-btn" onclick="document.getElementById('qr-share-modal').classList.add('hidden')">&times;</button>
                 </div>
                 <div class="modal-body" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
                     <div id="qr-canvas-holder" style="padding:16px; background:#fff; border-radius:12px; border:1px solid var(--border);"></div>
-                    <p style="font-size:0.85rem; color:var(--text-muted);">Scan this QR Code with your phone camera to open and save your photo strip!</p>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">Open this on your phone camera to view and save your memory.</p>
                     <button id="btn-native-web-share" class="btn btn-primary btn-lg" style="width:100%;">
-                        <i class="fa-solid fa-share-nodes"></i> Share via Device Apps
+                        <i class="fa-solid fa-share-nodes"></i> SHARE PHOTO
                     </button>
                 </div>
             </div>
@@ -529,17 +551,17 @@
         <div id="settings-modal" class="modal-backdrop hidden">
             <div class="modal-content" style="max-width: 520px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-gear"></i> Application Settings</h2>
+                    <h2><i class="fa-solid fa-gear"></i> SETTINGS</h2>
                     <button class="modal-close-btn" onclick="document.getElementById('settings-modal').classList.add('hidden')">&times;</button>
                 </div>
                 <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
                     <label style="display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; font-weight:600;">
-                        <span><i class="fa-solid fa-volume-high"></i> Shutter & Countdown Audio</span>
+                        <span><i class="fa-solid fa-volume-high"></i> Shutter Sound Effects</span>
                         <input type="checkbox" id="setting-sound" checked style="width:18px; height:18px;">
                     </label>
 
                     <label style="display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; font-weight:600;">
-                        <span><i class="fa-regular fa-clock"></i> Default Timer Delay</span>
+                        <span><i class="fa-regular fa-clock"></i> Default Countdown Delay</span>
                         <select id="setting-timer-default" class="select-input btn-sm" style="padding:4px 8px;">
                             <option value="5" selected>5 Seconds</option>
                             <option value="3">3 Seconds</option>
@@ -549,10 +571,10 @@
 
                     <div style="border-top:1px solid var(--border); padding-top:14px; display:flex; flex-direction:column; gap:10px;">
                         <button id="setting-clear-data" class="btn btn-secondary btn-sm danger-text" style="align-self:flex-start;">
-                            <i class="fa-solid fa-trash"></i> Reset Saved Gallery Data
+                            <i class="fa-solid fa-trash"></i> Reset Saved Gallery Memories
                         </button>
                         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">
-                            <strong>🔒 Privacy & Data Guarantee:</strong> All photos captured in SnapBooth Studio are processed 100% locally on your computer/phone. Zero photos are sent or stored on cloud servers.
+                            <strong>🔒 Privacy Guarantee:</strong> Your photos stay 100% on your device unless you choose to share them. Zero cloud uploads.
                         </p>
                     </div>
                 </div>

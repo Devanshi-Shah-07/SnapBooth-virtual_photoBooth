@@ -1,6 +1,6 @@
 /* ==========================================================================
-   SnapBooth Studio - Interactive Sticker Engine
-   Sticker picker, category switcher, drag-and-drop layer, scaling & deletion
+   SnapBooth Studio - Interactive Commercial Sticker Engine
+   Sticker picker, category switcher, drag, rotate, scale, z-index & deletion
    ========================================================================== */
 
 class StickerEngine {
@@ -8,6 +8,7 @@ class StickerEngine {
         this.gridContainer = document.getElementById('sticker-grid');
         this.dragLayer = document.getElementById('sticker-drag-layer');
         this.activeStickerElement = null;
+        this.highestZIndex = 10;
 
         this.stickerLibrary = {
             cute: ['💖', '✨', '🎀', '⭐', '🌸', '🧸', '👑', '🕶️', '🍓', '🍒', '🍭', '🐱', '🍦', '🐣', '🦋', '💐', '💌', '🌷'],
@@ -62,30 +63,91 @@ class StickerEngine {
         }
         if (!this.dragLayer) return;
 
+        this.highestZIndex += 1;
+
         const sticker = document.createElement('div');
         sticker.className = 'draggable-sticker';
+        sticker.style.zIndex = this.highestZIndex;
+        sticker.dataset.rotation = 0;
+        sticker.dataset.scale = 1;
+
         sticker.innerHTML = `
             <span class="sticker-content">${symbol}</span>
-            <div class="sticker-delete-btn"><i class="fa-solid fa-xmark"></i></div>
+            <div class="sticker-controls-bar">
+                <button class="sticker-btn btn-rotate" title="Rotate"><i class="fa-solid fa-rotate"></i></button>
+                <button class="sticker-btn btn-scale-up" title="Enlarge"><i class="fa-solid fa-plus"></i></button>
+                <button class="sticker-btn btn-scale-down" title="Shrink"><i class="fa-solid fa-minus"></i></button>
+                <button class="sticker-btn btn-delete danger-text" title="Delete"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         `;
 
         const rect = this.dragLayer.getBoundingClientRect();
-        const leftPos = rect.width > 0 ? (rect.width / 2) - 25 : 100;
-        const topPos = rect.height > 0 ? (rect.height / 2) - 25 : 100;
+        const leftPos = rect.width > 0 ? (rect.width / 2) - 30 : 100;
+        const topPos = rect.height > 0 ? (rect.height / 2) - 30 : 100;
 
         sticker.style.left = `${leftPos}px`;
         sticker.style.top = `${topPos}px`;
 
         this.makeDraggable(sticker);
+        this.bindStickerControls(sticker);
+
         this.dragLayer.appendChild(sticker);
         this.setActiveSticker(sticker);
 
-        const deleteBtn = sticker.querySelector('.sticker-delete-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
+        if (window.toast) window.toast.info('Sticker added to canvas!');
+    }
+
+    bindStickerControls(sticker) {
+        const btnRotate = sticker.querySelector('.btn-rotate');
+        const btnScaleUp = sticker.querySelector('.btn-scale-up');
+        const btnScaleDown = sticker.querySelector('.btn-scale-down');
+        const btnDelete = sticker.querySelector('.btn-delete');
+
+        if (btnRotate) {
+            btnRotate.addEventListener('click', (e) => {
+                e.stopPropagation();
+                let currentRot = parseInt(sticker.dataset.rotation || '0', 10);
+                currentRot = (currentRot + 45) % 360;
+                sticker.dataset.rotation = currentRot;
+                this.updateStickerTransform(sticker);
+            });
+        }
+
+        if (btnScaleUp) {
+            btnScaleUp.addEventListener('click', (e) => {
+                e.stopPropagation();
+                let currentScale = parseFloat(sticker.dataset.scale || '1');
+                currentScale = Math.min(currentScale + 0.2, 2.5);
+                sticker.dataset.scale = currentScale;
+                this.updateStickerTransform(sticker);
+            });
+        }
+
+        if (btnScaleDown) {
+            btnScaleDown.addEventListener('click', (e) => {
+                e.stopPropagation();
+                let currentScale = parseFloat(sticker.dataset.scale || '1');
+                currentScale = Math.max(currentScale - 0.2, 0.5);
+                sticker.dataset.scale = currentScale;
+                this.updateStickerTransform(sticker);
+            });
+        }
+
+        if (btnDelete) {
+            btnDelete.addEventListener('click', (e) => {
                 e.stopPropagation();
                 sticker.remove();
             });
+        }
+    }
+
+    updateStickerTransform(el) {
+        const rot = el.dataset.rotation || 0;
+        const scale = el.dataset.scale || 1;
+        const content = el.querySelector('.sticker-content');
+        if (content) {
+            content.style.transform = `rotate(${rot}deg) scale(${scale})`;
+            content.style.display = 'inline-block';
         }
     }
 
@@ -94,7 +156,10 @@ class StickerEngine {
         let startX, startY, initialLeft, initialTop;
 
         const onPointerDown = (e) => {
+            if (e.target.closest('.sticker-controls-bar')) return;
             isDragging = true;
+            this.highestZIndex += 1;
+            el.style.zIndex = this.highestZIndex;
             this.setActiveSticker(el);
 
             startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;

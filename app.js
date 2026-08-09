@@ -518,20 +518,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    let currentGalleryCategory = 'all';
+
+    // Kiosk Mode Handler
+    document.getElementById('btn-toggle-kiosk')?.addEventListener('click', () => {
+        document.body.classList.toggle('kiosk-mode');
+        const isKiosk = document.body.classList.contains('kiosk-mode');
+        if (isKiosk) {
+            showView('capture');
+            window.toast?.success('📺 Event Kiosk Mode Activated');
+        } else {
+            window.toast?.info('Kiosk Mode Exited');
+        }
+    });
+
+    // Gallery Category Filter Tabs
+    document.querySelectorAll('.gallery-filter-tabs .filter-chip').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.gallery-filter-tabs .filter-chip').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentGalleryCategory = tab.getAttribute('data-gcat') || 'all';
+            renderGalleryGrid(currentGalleryCategory);
+        });
+    });
+
     async function updateGalleryBadge() {
         const badge = document.getElementById('gallery-count-badge');
         if (!badge || !window.galleryDB) return;
         const count = await window.galleryDB.getPhotoCount();
         badge.textContent = count;
-        renderGalleryGrid();
+        renderGalleryGrid(currentGalleryCategory);
     }
 
-    async function renderGalleryGrid() {
+    async function renderGalleryGrid(filterCat = 'all') {
         const grid = document.getElementById('gallery-grid');
         const empty = document.getElementById('gallery-empty');
         if (!grid || !window.galleryDB) return;
 
-        const photos = await window.galleryDB.getAllPhotos();
+        let photos = await window.galleryDB.getAllPhotos();
+        
+        if (filterCat === 'strips') {
+            photos = photos.filter(p => p.type === 'strip');
+        } else if (filterCat === 'gifs') {
+            photos = photos.filter(p => p.type === 'gif');
+        }
+
         if (photos.length === 0) {
             grid.innerHTML = '';
             if (empty) empty.style.display = 'block';
@@ -545,7 +576,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const card = document.createElement('div');
             card.className = 'gallery-item';
             card.innerHTML = `
-                <img src="${item.dataURL}" alt="Saved Strip">
+                <img src="${item.dataURL}" alt="Saved Memory">
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
                     <span>${new Date(item.timestamp).toLocaleDateString()}</span>
                     <button class="btn btn-ghost btn-sm danger-text delete-item-btn" data-id="${item.id}">

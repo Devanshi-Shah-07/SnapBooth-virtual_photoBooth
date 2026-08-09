@@ -87,9 +87,7 @@ class CameraEngine {
             // Hide fallback overlay when camera stream is live
             this.fallbackElement.classList.add('hidden');
             this.fallbackElement.style.display = 'none';
-            this.statusText.textContent = 'Camera Live';
-            if (this.statusDot) this.statusDot.style.background = '#10b981';
-
+            this.setCameraState('READY');
             this.updatePowerBtnState(true);
 
             // Handle mobile video play user interaction requirements
@@ -117,17 +115,48 @@ class CameraEngine {
             console.warn('Camera access error on phone/desktop:', err);
             this.fallbackElement.classList.remove('hidden');
             this.fallbackElement.style.display = 'flex';
-            this.statusText.textContent = 'Camera Offline / Demo Mode';
-            if (this.statusDot) this.statusDot.style.background = '#f59e0b';
             this.updatePowerBtnState(false);
 
             if (fallbackText) {
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    this.setCameraState('BLOCKED');
                     fallbackText.innerHTML = `<strong>Camera Permission Blocked:</strong><br><span style="font-size: 0.85rem;">Tap the 🔒 <strong>Lock icon</strong> in your browser bar at the top → <strong>Permissions</strong> → <strong>Allow Camera</strong>, then tap "Turn On Camera"!</span>`;
                 } else {
+                    this.setCameraState('OFF');
                     fallbackText.textContent = 'Camera is offline. Tap "Turn On Camera" to grant access or try Virtual Demo Stream below!';
                 }
             }
+        }
+    }
+
+    setCameraState(stateName) {
+        if (!this.statusText) return;
+        switch (stateName) {
+            case 'READY':
+                this.statusText.textContent = 'Camera Ready';
+                if (this.statusDot) this.statusDot.style.background = '#10b981';
+                break;
+            case 'COUNTDOWN':
+                this.statusText.textContent = 'Countdown...';
+                if (this.statusDot) this.statusDot.style.background = '#f59e0b';
+                break;
+            case 'CAPTURING':
+                this.statusText.textContent = 'Capturing Photo...';
+                if (this.statusDot) this.statusDot.style.background = '#ec4899';
+                break;
+            case 'CAPTURED':
+                this.statusText.textContent = 'Photo Captured!';
+                if (this.statusDot) this.statusDot.style.background = '#3b82f6';
+                break;
+            case 'BLOCKED':
+                this.statusText.textContent = 'Camera Access Blocked';
+                if (this.statusDot) this.statusDot.style.background = '#f97316';
+                break;
+            case 'OFF':
+            default:
+                this.statusText.textContent = 'Camera Off';
+                if (this.statusDot) this.statusDot.style.background = '#ef4444';
+                break;
         }
     }
 
@@ -442,7 +471,8 @@ class CameraEngine {
         const capturedCanvases = [];
 
         for (let shotIndex = 0; shotIndex < totalShots; shotIndex++) {
-            progressText.textContent = `Shot ${shotIndex + 1} of ${totalShots}`;
+            this.setCameraState('COUNTDOWN');
+            progressText.textContent = `Photo ${shotIndex + 1} of ${totalShots}`;
             
             const dots = dotsContainer.querySelectorAll('.dot');
             dots.forEach((d, idx) => {
@@ -455,6 +485,7 @@ class CameraEngine {
                 await new Promise(res => setTimeout(res, 1000));
             }
 
+            this.setCameraState('CAPTURING');
             if (window.soundSynth) window.soundSynth.playSnapBeep();
             countdownNumber.textContent = '📸';
             await new Promise(res => setTimeout(res, 200));
@@ -472,6 +503,7 @@ class CameraEngine {
         countdownOverlay.classList.add('hidden');
         progressOverlay.classList.add('hidden');
         this.isCapturing = false;
+        this.setCameraState('CAPTURED');
 
         if (onComplete) {
             onComplete(capturedCanvases);
