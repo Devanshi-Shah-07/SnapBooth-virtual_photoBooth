@@ -1,7 +1,7 @@
 /* ==========================================================================
    SnapBooth Studio - Camera Engine
    Webcam feed manager, live preview filter pipeline, countdown sequence, 
-   virtual live demo feed, manual power toggle & snapshot burst
+   virtual live demo feed, manual power toggle, permission recovery & snapshot burst
    ========================================================================== */
 
 class CameraEngine {
@@ -20,8 +20,28 @@ class CameraEngine {
         this.isDemoMode = false;
         this.animFrameId = null;
         this.demoAngle = 0;
+        this.permissionDenied = false;
 
+        this.setupPermissionListeners();
         this.initCamera();
+    }
+
+    async setupPermissionListeners() {
+        if (navigator.permissions && navigator.permissions.query) {
+            try {
+                const status = await navigator.permissions.query({ name: 'camera' });
+                status.onchange = () => {
+                    if (status.state === 'granted') {
+                        this.permissionDenied = false;
+                        this.initCamera();
+                    } else if (status.state === 'denied') {
+                        this.permissionDenied = true;
+                    }
+                };
+            } catch (e) {
+                // Browser might not support 'camera' query name
+            }
+        }
     }
 
     async initCamera() {
@@ -43,8 +63,9 @@ class CameraEngine {
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.currentStream = stream;
             this.videoElement.srcObject = stream;
+            this.permissionDenied = false;
 
-            // Immediately hide fallback screen when stream is granted
+            // Hide fallback screen when stream is granted
             this.fallbackElement.classList.add('hidden');
             this.fallbackElement.style.display = 'none';
             this.statusText.textContent = 'Camera Live';
@@ -69,9 +90,34 @@ class CameraEngine {
             console.warn('Webcam access error/restricted:', err);
             this.fallbackElement.classList.remove('hidden');
             this.fallbackElement.style.display = 'flex';
-            this.statusText.textContent = 'Camera Offline / Demo Mode';
-            if (this.statusDot) this.statusDot.style.background = '#f59e0b';
             this.updatePowerBtnState(false);
+
+            const fallbackText = document.getElementById('fallback-status-text');
+
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                this.permissionDenied = true;
+                if (fallbackText) {
+                    fallbackText.innerHTML = `<strong>Camera Access Blocked!</strong><br><span style="font-size: 0.85rem;">Did you accidentally click "Block" or "Never allow"? Tap below for step-by-step unblock instructions.</span>`;
+                }
+                this.statusText.textContent = 'Camera Blocked (Fix Available)';
+                if (this.statusDot) this.statusDot.style.background = '#ef4444';
+                
+                // Show permission help modal to give second chance
+                this.showPermissionHelpModal();
+            } else {
+                if (fallbackText) {
+                    fallbackText.textContent = 'Camera access restricted or offline.';
+                }
+                this.statusText.textContent = 'Camera Offline / Demo Mode';
+                if (this.statusDot) this.statusDot.style.background = '#f59e0b';
+            }
+        }
+    }
+
+    showPermissionHelpModal() {
+        const modal = document.getElementById('camera-permission-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
         }
     }
 
@@ -79,7 +125,11 @@ class CameraEngine {
         if (this.currentStream && this.currentStream.active) {
             this.stopCamera();
         } else {
-            this.initCamera();
+            if (this.permissionDenied) {
+                this.showPermissionHelpModal();
+            } else {
+                this.initCamera();
+            }
         }
     }
 
@@ -378,7 +428,7 @@ class CameraEngine {
 
         for (let shotIndex = 0; shotIndex < totalShots; shotIndex++) {
             progressText.textContent = `Shot ${shotIndex + 1} of ${totalShots}`;
-
+            
             const dots = dotsContainer.querySelectorAll('.dot');
             dots.forEach((d, idx) => {
                 if (idx <= shotIndex) d.classList.add('filled');

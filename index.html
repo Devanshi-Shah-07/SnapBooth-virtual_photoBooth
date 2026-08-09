@@ -106,6 +106,9 @@
                                 <button id="btn-request-camera" class="btn btn-primary btn-sm">
                                     <i class="fa-solid fa-camera"></i> Turn On Camera
                                 </button>
+                                <button id="btn-unblock-help" class="btn btn-secondary btn-sm warning-btn">
+                                    <i class="fa-solid fa-circle-question"></i> How to Allow Camera
+                                </button>
                                 <button id="btn-virtual-demo" class="btn btn-accent btn-sm">
                                     <i class="fa-solid fa-play"></i> Virtual Demo Stream
                                 </button>
@@ -295,8 +298,7 @@
 
                         <!-- Tab 3: Sticker Decorator -->
                         <div id="tab-stickers" class="tab-pane">
-                            <p class="hint-text"><i class="fa-solid fa-hand-pointer"></i> Click a sticker to stamp on
-                                strip. Drag, resize or delete active stickers!</p>
+                            <p class="hint-text"><i class="fa-solid fa-hand-pointer"></i> Tap or click a sticker to place it. Drag with mouse/finger to move!</p>
                             <div class="sticker-category-tabs">
                                 <button class="sticker-cat-btn active" data-cat="cute">Cute & Emojis</button>
                                 <button class="sticker-cat-btn" data-cat="y2k">Retro Y2K</button>
@@ -382,10 +384,13 @@
                     <!-- Export Actions Bar -->
                     <div class="export-bar">
                         <button id="btn-download-png" class="btn btn-primary btn-lg">
-                            <i class="fa-solid fa-download"></i> Download Photo Strip (PNG)
+                            <i class="fa-solid fa-download"></i> Save PNG
                         </button>
                         <button id="btn-download-gif" class="btn btn-accent btn-lg">
-                            <i class="fa-solid fa-film"></i> Save Animated GIF
+                            <i class="fa-solid fa-film"></i> Save GIF
+                        </button>
+                        <button id="btn-open-print-modal" class="btn btn-secondary icon-with-text">
+                            <i class="fa-solid fa-print"></i> Print & Sizes
                         </button>
                         <button id="btn-copy-clipboard" class="btn btn-secondary icon-only" title="Copy to Clipboard">
                             <i class="fa-regular fa-copy"></i>
@@ -401,7 +406,7 @@
                 <div class="modal-header">
                     <h2><i class="fa-solid fa-images"></i> Photobooth Session Gallery</h2>
                     <div class="modal-header-actions">
-                        <span class="persistence-badge"><i class="fa-solid fa-hard-drive"></i> Saved Locally</span>
+                        <span class="persistence-badge"><i class="fa-solid fa-database"></i> High Capacity Storage</span>
                         <button id="btn-clear-gallery" class="btn btn-sm btn-outline danger-text">
                             <i class="fa-solid fa-trash-can"></i> Clear All
                         </button>
@@ -419,12 +424,124 @@
                 </div>
             </div>
         </div>
+
+        <!-- Camera Permission Help Modal (Second Chance Guidance) -->
+        <div id="camera-permission-modal" class="modal-backdrop hidden">
+            <div class="modal-content help-modal-content">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-shield-halved"></i> How to Allow Camera Access</h2>
+                    <button id="btn-close-permission-modal" class="modal-close-btn">&times;</button>
+                </div>
+                <div class="modal-body permission-help-body">
+                    <div class="permission-alert">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <div>
+                            <strong>Accidentally clicked "Never allow" or "Block"?</strong>
+                            <p>Don't worry! Browsers block re-asking camera permissions automatically, but you can give it a second chance in 2 easy steps:</p>
+                        </div>
+                    </div>
+
+                    <div class="guide-steps-grid">
+                        <div class="guide-card">
+                            <div class="guide-header"><i class="fa-desktop"></i> Desktop (Chrome / Edge / Firefox)</div>
+                            <ol class="guide-list">
+                                <li>Look at the top URL address bar next to the website link.</li>
+                                <li>Click the <strong>🔒 Lock icon</strong> or <strong>Tune icon</strong> (left of URL).</li>
+                                <li>Find <strong>Camera</strong> and toggle switch to <strong>ALLOW</strong>.</li>
+                                <li>Click the <strong>"Try Camera Again"</strong> button below!</li>
+                            </ol>
+                        </div>
+
+                        <div class="guide-card">
+                            <div class="guide-header"><i class="fa-mobile-screen"></i> Mobile (iPhone / Android)</div>
+                            <ol class="guide-list">
+                                <li>Tap the <strong>🔒 Lock</strong> or <strong>aA</strong> icon in the address bar.</li>
+                                <li>Select <strong>Website Settings</strong>.</li>
+                                <li>Tap <strong>Camera</strong> and set to <strong>Allow</strong>.</li>
+                                <li>Return here and tap <strong>"Try Camera Again"</strong>!</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="help-actions">
+                        <button id="btn-retry-camera-access" class="btn btn-primary btn-lg">
+                            <i class="fa-solid fa-rotate-right"></i> Try Camera Again
+                        </button>
+                        <button id="btn-fallback-demo-mode" class="btn btn-secondary btn-lg">
+                            <i class="fa-solid fa-play"></i> Use Virtual Demo Stream
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print & Sizing Selection Modal -->
+        <div id="print-size-modal" class="modal-backdrop hidden">
+            <div class="modal-content print-modal-content">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-print"></i> Select Print Size & Format</h2>
+                    <button id="btn-close-print-modal" class="modal-close-btn">&times;</button>
+                </div>
+                <div class="modal-body print-modal-body">
+                    <p class="hint-text text-center mb-4">Choose your preferred photo printing size or export standard:</p>
+
+                    <div class="print-sizes-grid">
+                        <div class="print-size-card active" data-size="strip-2x6">
+                            <div class="size-preview preview-2x6">
+                                <div class="mini-strip-box"></div>
+                            </div>
+                            <h3>Classic Photobooth Strip</h3>
+                            <p class="size-dimensions">2" × 6" (5 × 15 cm)</p>
+                            <p class="size-desc">Ideal for traditional bookmarks & photobooth fridge strips.</p>
+                        </div>
+
+                        <div class="print-size-card" data-size="photo-4x6">
+                            <div class="size-preview preview-4x6">
+                                <div class="mini-postcard-box"></div>
+                            </div>
+                            <h3>Standard Postcard</h3>
+                            <p class="size-dimensions">4" × 6" (10 × 15 cm)</p>
+                            <p class="size-desc">Perfect size for standard photo prints & frames.</p>
+                        </div>
+
+                        <div class="print-size-card" data-size="square-4x4">
+                            <div class="size-preview preview-4x4">
+                                <div class="mini-square-box"></div>
+                            </div>
+                            <h3>Square Mini Print</h3>
+                            <p class="size-dimensions">4" × 4" (10 × 10 cm)</p>
+                            <p class="size-desc">Great for Instagram aesthetic & square photo walls.</p>
+                        </div>
+
+                        <div class="print-size-card" data-size="wallet-pair">
+                            <div class="size-preview preview-wallet">
+                                <div class="mini-wallet-box"></div>
+                            </div>
+                            <h3>Wallet Size Pair</h3>
+                            <p class="size-dimensions">2.5" × 3.5" (6 × 9 cm)</p>
+                            <p class="size-desc">Fits perfectly in standard wallets and phone cases.</p>
+                        </div>
+                    </div>
+
+                    <div class="print-modal-actions">
+                        <button id="btn-trigger-print" class="btn btn-primary btn-lg">
+                            <i class="fa-solid fa-print"></i> Print Photo Now (🖨️ Printer)
+                        </button>
+                        <button id="btn-download-highres-print" class="btn btn-secondary btn-lg">
+                            <i class="fa-solid fa-file-arrow-down"></i> Download 300 DPI High-Res PNG
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="utils/audio.js"></script>
     <script src="utils/gifEncoder.js"></script>
+    <script src="utils/db.js"></script>
     <script src="camera.js"></script>
     <script src="canvasBuilder.js"></script>
     <script src="stickers.js"></script>

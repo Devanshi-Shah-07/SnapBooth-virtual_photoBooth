@@ -1,11 +1,11 @@
 /* ==========================================================================
    SnapBooth Studio - Main Application Controller
    Connects camera stream, camera power switch, individual photo deletion, 
-   canvas rendering, customization tabs, export & gallery
-   NOW WITH localStorage persistence for gallery images
+   canvas rendering, customization tabs, export, print sizing, permission recovery 
+   & high-capacity IndexedDB session gallery
    ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // 1. Initialize Core Engines
     const cameraEngine = new CameraEngine();
     const canvasBuilder = new PhotoboothCanvasBuilder('photobooth-canvas');
@@ -13,40 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Session State
     let capturedShots = [];
-    const GALLERY_STORAGE_KEY = 'snapbooth_gallery';
-
-    // Load persisted gallery from localStorage
-    const loadGalleryFromStorage = () => {
-        try {
-            const stored = localStorage.getItem(GALLERY_STORAGE_KEY);
-            if (stored) {
-                return JSON.parse(stored);
-            }
-        } catch (e) {
-            console.warn('Failed to load gallery from localStorage:', e);
-        }
-        return [];
-    };
-
-    const saveGalleryToStorage = (gallery) => {
-        try {
-            localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(gallery));
-        } catch (e) {
-            console.warn('Failed to save gallery to localStorage (quota may be exceeded):', e);
-            // If quota exceeded, show a user-friendly message
-            if (e.name === 'QuotaExceededError' || e.code === 22) {
-                alert('Storage is full! Please delete some saved photos from the gallery to free up space.');
-            }
-        }
-    };
-
-    // Initialize gallery from storage
-    let sessionGallery = loadGalleryFromStorage();
 
     // UI Element References
     const btnToggleCameraPower = document.getElementById('btn-toggle-camera-power');
     const btnEnableCam = document.getElementById('btn-enable-cam');
     const btnRequestCamera = document.getElementById('btn-request-camera');
+    const btnUnblockHelp = document.getElementById('btn-unblock-help');
     const btnVirtualDemo = document.getElementById('btn-virtual-demo');
     const btnStartCapture = document.getElementById('btn-start-capture');
     const btnRetakeAll = document.getElementById('btn-retake-all');
@@ -60,20 +32,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDownloadPng = document.getElementById('btn-download-png');
     const btnDownloadGif = document.getElementById('btn-download-gif');
     const btnCopyClipboard = document.getElementById('btn-copy-clipboard');
+    const btnOpenPrintModal = document.getElementById('btn-open-print-modal');
 
     const galleryModal = document.getElementById('gallery-modal');
     const btnSessionGallery = document.getElementById('btn-session-gallery');
     const btnCloseGallery = document.getElementById('btn-close-gallery');
+    const btnClearGallery = document.getElementById('btn-clear-gallery');
     const galleryGrid = document.getElementById('gallery-grid');
     const galleryEmpty = document.getElementById('gallery-empty');
     const galleryCountBadge = document.getElementById('gallery-count-badge');
 
-    // Update gallery count badge on load
-    if (galleryCountBadge) {
-        galleryCountBadge.textContent = sessionGallery.length;
+    // Camera Permission Modal References
+    const cameraPermissionModal = document.getElementById('camera-permission-modal');
+    const btnClosePermissionModal = document.getElementById('btn-close-permission-modal');
+    const btnRetryCameraAccess = document.getElementById('btn-retry-camera-access');
+    const btnFallbackDemoMode = document.getElementById('btn-fallback-demo-mode');
+
+    // Print Size Modal References
+    const printSizeModal = document.getElementById('print-size-modal');
+    const btnClosePrintModal = document.getElementById('btn-close-print-modal');
+    const btnTriggerPrint = document.getElementById('btn-trigger-print');
+    const btnDownloadHighresPrint = document.getElementById('btn-download-highres-print');
+    const printSizeCards = document.querySelectorAll('.print-size-card');
+    let selectedPrintSize = 'strip-2x6';
+
+    // 2. High Capacity IndexedDB Gallery Integration
+    const updateGalleryBadgeCount = async () => {
+        try {
+            if (window.galleryDB) {
+                const photos = await window.galleryDB.getAllPhotos();
+                if (galleryCountBadge) galleryCountBadge.textContent = photos.length;
+            }
+        } catch (e) {
+            console.warn('Failed to update gallery count badge:', e);
+        }
+    };
+
+    // Migrate any legacy photos & refresh count
+    if (window.galleryDB) {
+        await window.galleryDB.migrateFromLocalStorage();
+        await updateGalleryBadgeCount();
     }
 
-    // 2. Camera Power Switch & Controls
+    // 3. Camera Controls & Permission Recovery
     if (btnToggleCameraPower) {
         btnToggleCameraPower.addEventListener('click', () => {
             cameraEngine.toggleCameraPower();
@@ -89,6 +90,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnRequestCamera) {
         btnRequestCamera.addEventListener('click', () => {
             cameraEngine.initCamera();
+        });
+    }
+
+    if (btnUnblockHelp) {
+        btnUnblockHelp.addEventListener('click', () => {
+            if (cameraPermissionModal) cameraPermissionModal.classList.remove('hidden');
+        });
+    }
+
+    if (btnClosePermissionModal) {
+        btnClosePermissionModal.addEventListener('click', () => {
+            if (cameraPermissionModal) cameraPermissionModal.classList.add('hidden');
+        });
+    }
+
+    if (btnRetryCameraAccess) {
+        btnRetryCameraAccess.addEventListener('click', () => {
+            if (cameraPermissionModal) cameraPermissionModal.classList.add('hidden');
+            cameraEngine.initCamera();
+        });
+    }
+
+    if (btnFallbackDemoMode) {
+        btnFallbackDemoMode.addEventListener('click', () => {
+            if (cameraPermissionModal) cameraPermissionModal.classList.add('hidden');
+            cameraEngine.startVirtualDemoFeed();
         });
     }
 
@@ -145,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const thumbItem = document.createElement('div');
             thumbItem.className = 'shot-thumb-item';
 
-            // Get Data URL of canvas or image
             let src = '';
             if (shotCanvas instanceof HTMLCanvasElement) {
                 src = shotCanvas.toDataURL('image/png');
@@ -161,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
             `;
 
-            // Delete individual photo event
             const deleteBtn = thumbItem.querySelector('.shot-delete-btn');
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -181,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // 3. Filter Selector
+    // 4. Filter Selector
     const filterChips = document.querySelectorAll('.filter-chip');
     filterChips.forEach(chip => {
         chip.addEventListener('click', () => {
@@ -192,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 4. Capture Button Trigger
+    // 5. Capture Button Trigger
     if (btnStartCapture) {
         btnStartCapture.addEventListener('click', () => {
             if (cameraEngine.isCapturing) return;
@@ -227,8 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (window.confetti) {
                         window.confetti({
-                            particleCount: 70,
-                            spread: 80,
+                            particleCount: 75,
+                            spread: 85,
                             origin: { y: 0.7 }
                         });
                     }
@@ -246,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. Customization Tab Navigation
+    // 6. Customization Tab Navigation
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
 
@@ -327,21 +352,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fontSelect) fontSelect.addEventListener('change', updateTextCaptions);
     if (toggleDate) toggleDate.addEventListener('change', updateTextCaptions);
 
-    // 6. Export Actions
-    const generateCompositeCanvas = () => {
+    // 7. Composite High-Res Canvas Generator
+    const generateCompositeCanvas = (scaleMultiplier = 1) => {
         const baseCanvas = document.getElementById('photobooth-canvas');
         const exportCanvas = document.createElement('canvas');
-        exportCanvas.width = baseCanvas.width;
-        exportCanvas.height = baseCanvas.height;
+        exportCanvas.width = baseCanvas.width * scaleMultiplier;
+        exportCanvas.height = baseCanvas.height * scaleMultiplier;
         const ctx = exportCanvas.getContext('2d');
 
-        ctx.drawImage(baseCanvas, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(baseCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
 
         const dragLayer = document.getElementById('sticker-drag-layer');
         const stickers = dragLayer.querySelectorAll('.draggable-sticker');
         const layerRect = dragLayer.getBoundingClientRect();
-        const scaleX = baseCanvas.width / layerRect.width;
-        const scaleY = baseCanvas.height / layerRect.height;
+        const scaleX = exportCanvas.width / layerRect.width;
+        const scaleY = exportCanvas.height / layerRect.height;
 
         stickers.forEach(sticker => {
             const contentEl = sticker.querySelector('.sticker-content');
@@ -365,19 +392,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Download PNG
     if (btnDownloadPng) {
-        btnDownloadPng.addEventListener('click', () => {
+        btnDownloadPng.addEventListener('click', async () => {
             const finalCanvas = generateCompositeCanvas();
-            const dataUrl = finalCanvas.toDataURL('image/png');
+            const dataUrl = finalCanvas.toDataURL('image/png', 1.0);
 
             const link = document.createElement('a');
             link.download = `SnapBooth_${Date.now()}.png`;
             link.href = dataUrl;
             link.click();
 
-            addToGallery(dataUrl);
+            await saveToHighCapacityGallery(dataUrl);
 
             if (window.confetti) {
-                window.confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+                window.confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
             }
         });
     }
@@ -404,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('GIF generation error:', err);
             }
 
-            btnDownloadGif.innerHTML = '<i class="fa-solid fa-film"></i> Save Animated GIF';
+            btnDownloadGif.innerHTML = '<i class="fa-solid fa-film"></i> Save GIF';
         });
     }
 
@@ -426,85 +453,165 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 7. Session Gallery with localStorage Persistence
-    const addToGallery = (dataUrl) => {
-        const entry = {
-            id: Date.now(),
-            dataUrl: dataUrl,
-            createdAt: new Date().toLocaleString()
-        };
-        sessionGallery.push(entry);
-        saveGalleryToStorage(sessionGallery);
-        if (galleryCountBadge) galleryCountBadge.textContent = sessionGallery.length;
-        renderGallery();
-    };
-
-    const deleteFromGallery = (index) => {
-        sessionGallery.splice(index, 1);
-        saveGalleryToStorage(sessionGallery);
-        if (galleryCountBadge) galleryCountBadge.textContent = sessionGallery.length;
-        renderGallery();
-    };
-
-    const clearAllGallery = () => {
-        if (!confirm('Are you sure you want to delete ALL saved photos? This cannot be undone.')) return;
-        sessionGallery.length = 0;
-        saveGalleryToStorage(sessionGallery);
-        if (galleryCountBadge) galleryCountBadge.textContent = 0;
-        renderGallery();
-    };
-
-    const renderGallery = () => {
-        if (sessionGallery.length === 0) {
-            if (galleryEmpty) galleryEmpty.classList.remove('hidden');
-            if (galleryGrid) galleryGrid.innerHTML = '';
-            return;
-        }
-
-        if (galleryEmpty) galleryEmpty.classList.add('hidden');
-        if (!galleryGrid) return;
-        galleryGrid.innerHTML = '';
-
-        sessionGallery.forEach((entry, idx) => {
-            // Support both old format (string) and new format (object)
-            const dataUrl = typeof entry === 'string' ? entry : entry.dataUrl;
-            const createdAt = typeof entry === 'object' && entry.createdAt ? entry.createdAt : '';
-
-            const item = document.createElement('div');
-            item.className = 'gallery-item';
-            item.innerHTML = `
-                <img src="${dataUrl}" alt="Photobooth Strip ${idx + 1}">
-                ${createdAt ? `<p class="gallery-date"><i class="fa-regular fa-calendar"></i> ${createdAt}</p>` : ''}
-                <div class="gallery-actions">
-                    <a href="${dataUrl}" download="SnapBooth_${idx + 1}.png" class="btn btn-sm btn-primary flex-1">
-                        <i class="fa-solid fa-download"></i> Save
-                    </a>
-                    <button class="btn btn-sm btn-outline danger-text gallery-delete-btn" title="Delete from gallery">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-            `;
-
-            // Wire up delete button
-            const deleteBtn = item.querySelector('.gallery-delete-btn');
-            deleteBtn.addEventListener('click', () => {
-                deleteFromGallery(idx);
-            });
-
-            galleryGrid.appendChild(item);
+    // 8. Print Size Selection Modal & Native Printing
+    if (btnOpenPrintModal) {
+        btnOpenPrintModal.addEventListener('click', () => {
+            if (printSizeModal) printSizeModal.classList.remove('hidden');
         });
+    }
+
+    if (btnClosePrintModal) {
+        btnClosePrintModal.addEventListener('click', () => {
+            if (printSizeModal) printSizeModal.classList.add('hidden');
+        });
+    }
+
+    printSizeCards.forEach(card => {
+        card.addEventListener('click', () => {
+            printSizeCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            selectedPrintSize = card.dataset.size;
+        });
+    });
+
+    // Trigger Print Action
+    if (btnTriggerPrint) {
+        btnTriggerPrint.addEventListener('click', () => {
+            const finalCanvas = generateCompositeCanvas(2);
+            const dataUrl = finalCanvas.toDataURL('image/png', 1.0);
+
+            // Open print window formatted for chosen print size
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>SnapBooth Studio Print</title>
+                        <style>
+                            @page {
+                                margin: 0;
+                                size: auto;
+                            }
+                            body {
+                                margin: 0;
+                                padding: 0;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                                background: #fff;
+                            }
+                            img {
+                                max-width: 100%;
+                                max-height: 100vh;
+                                object-fit: contain;
+                                page-break-inside: avoid;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${dataUrl}" onload="window.print(); window.close();" />
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            } else {
+                window.print();
+            }
+        });
+    }
+
+    // Download High-Res 300 DPI PNG
+    if (btnDownloadHighresPrint) {
+        btnDownloadHighresPrint.addEventListener('click', async () => {
+            const finalCanvas = generateCompositeCanvas(2);
+            const dataUrl = finalCanvas.toDataURL('image/png', 1.0);
+
+            const link = document.createElement('a');
+            link.download = `SnapBooth_Print300DPI_${selectedPrintSize}_${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+
+            await saveToHighCapacityGallery(dataUrl);
+            if (printSizeModal) printSizeModal.classList.add('hidden');
+        });
+    }
+
+    // 9. High-Capacity IndexedDB Gallery Engine
+    const saveToHighCapacityGallery = async (dataUrl) => {
+        try {
+            if (window.galleryDB) {
+                await window.galleryDB.addPhoto(dataUrl);
+                await updateGalleryBadgeCount();
+            }
+        } catch (err) {
+            console.error('Failed to save to gallery DB:', err);
+        }
+    };
+
+    const renderGallery = async () => {
+        if (!galleryGrid) return;
+
+        try {
+            const photos = await window.galleryDB.getAllPhotos();
+
+            if (photos.length === 0) {
+                if (galleryEmpty) galleryEmpty.classList.remove('hidden');
+                galleryGrid.innerHTML = '';
+                if (galleryCountBadge) galleryCountBadge.textContent = '0';
+                return;
+            }
+
+            if (galleryEmpty) galleryEmpty.classList.add('hidden');
+            galleryGrid.innerHTML = '';
+            if (galleryCountBadge) galleryCountBadge.textContent = photos.length;
+
+            photos.forEach((entry) => {
+                const dataUrl = entry.dataUrl;
+                const createdAt = entry.createdAt || 'Saved Memory';
+                const id = entry.id;
+
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `
+                    <img src="${dataUrl}" alt="Photobooth Strip">
+                    <p class="gallery-date"><i class="fa-regular fa-calendar"></i> ${createdAt}</p>
+                    <div class="gallery-actions">
+                        <a href="${dataUrl}" download="SnapBooth_${id}.png" class="btn btn-sm btn-primary flex-1">
+                            <i class="fa-solid fa-download"></i> Save
+                        </a>
+                        <button class="btn btn-sm btn-outline danger-text gallery-delete-btn" data-id="${id}" title="Delete from gallery">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+
+                const deleteBtn = item.querySelector('.gallery-delete-btn');
+                deleteBtn.addEventListener('click', async () => {
+                    if (window.galleryDB) {
+                        await window.galleryDB.deletePhoto(id);
+                        await renderGallery();
+                    }
+                });
+
+                galleryGrid.appendChild(item);
+            });
+        } catch (err) {
+            console.error('Error rendering gallery:', err);
+        }
     };
 
     if (btnSessionGallery) {
-        btnSessionGallery.addEventListener('click', () => {
-            renderGallery();
-            galleryModal.classList.remove('hidden');
+        btnSessionGallery.addEventListener('click', async () => {
+            await renderGallery();
+            if (galleryModal) galleryModal.classList.remove('hidden');
         });
     }
 
     if (btnCloseGallery) {
         btnCloseGallery.addEventListener('click', () => {
-            galleryModal.classList.add('hidden');
+            if (galleryModal) galleryModal.classList.add('hidden');
         });
     }
 
@@ -516,9 +623,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Wire up the Clear All Gallery button
-    const btnClearGallery = document.getElementById('btn-clear-gallery');
     if (btnClearGallery) {
-        btnClearGallery.addEventListener('click', clearAllGallery);
+        btnClearGallery.addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to delete ALL saved photos from your gallery? This cannot be undone.')) return;
+            if (window.galleryDB) {
+                await window.galleryDB.clearAll();
+                await renderGallery();
+            }
+        });
     }
 });
