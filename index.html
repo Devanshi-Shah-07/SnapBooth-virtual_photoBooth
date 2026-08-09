@@ -101,10 +101,13 @@
                         <!-- Fallback message if no camera -->
                         <div id="camera-fallback" class="camera-fallback hidden">
                             <i class="fa-solid fa-video-slash"></i>
-                            <p id="fallback-status-text">Camera access restricted or offline.</p>
+                            <p id="fallback-status-text">Camera is powered off. Tap "Turn On Camera" to start!</p>
                             <div class="fallback-btn-group">
                                 <button id="btn-request-camera" class="btn btn-primary btn-sm">
                                     <i class="fa-solid fa-camera"></i> Turn On Camera
+                                </button>
+                                <button id="btn-unblock-guide" class="btn btn-secondary btn-sm warning-btn" onclick="const g=document.getElementById('mobile-unblock-guide'); if(g) g.classList.toggle('hidden');">
+                                    <i class="fa-solid fa-circle-question"></i> How to Unblock Camera
                                 </button>
                                 <button id="btn-virtual-demo" class="btn btn-accent btn-sm">
                                     <i class="fa-solid fa-play"></i> Virtual Demo Stream
@@ -112,6 +115,26 @@
                                 <label for="file-upload-input" class="btn btn-secondary btn-sm">
                                     <i class="fa-solid fa-upload"></i> Upload Photos
                                 </label>
+                            </div>
+
+                            <!-- Mobile Quick Unblock Guide Accordion -->
+                            <div id="mobile-unblock-guide" class="mobile-unblock-guide hidden">
+                                <div class="unblock-card">
+                                    <strong>🤖 Android (Chrome):</strong>
+                                    <ol>
+                                        <li>Tap 🔒 <strong>Lock icon</strong> next to website URL.</li>
+                                        <li>Tap <strong>Permissions</strong> → <strong>Camera</strong> → <strong>ALLOW</strong>.</li>
+                                        <li>Tap <strong>"Turn On Camera"</strong> above!</li>
+                                    </ol>
+                                </div>
+                                <div class="unblock-card">
+                                    <strong>🍎 iPhone / iPad (Safari):</strong>
+                                    <ol>
+                                        <li>Tap <strong>aA</strong> or 🔒 <strong>Lock icon</strong> in address bar.</li>
+                                        <li>Tap <strong>Website Settings</strong> → <strong>Camera</strong> → <strong>Allow</strong>.</li>
+                                        <li>Tap <strong>"Turn On Camera"</strong> above!</li>
+                                    </ol>
+                                </div>
                             </div>
                         </div>
                     </div>

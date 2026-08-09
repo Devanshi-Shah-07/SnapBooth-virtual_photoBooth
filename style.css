@@ -1469,6 +1469,46 @@ body {
     background: rgba(254, 243, 199, 0.8) !important;
 }
 
+/* ========== Mobile Unblock Guide Accordion ========== */
+.mobile-unblock-guide {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+}
+
+@media (max-width: 600px) {
+    .mobile-unblock-guide {
+        grid-template-columns: 1fr;
+    }
+}
+
+.unblock-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: var(--text-main);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.unblock-card strong {
+    display: block;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    font-size: 0.82rem;
+}
+
+.unblock-card ol {
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 /* ========== Print & Sizing Modal ========== */
 .print-modal-content {
     max-width: 780px;
