@@ -1,7 +1,7 @@
 /* ==========================================================================
    SnapBooth Studio - Camera Engine
    Webcam feed manager, live preview filter pipeline, countdown sequence, 
-   virtual live demo feed, manual power toggle, mobile camera fallback & snapshot burst
+   virtual live demo feed, manual power toggle, clean mobile camera pipeline & snapshot burst
    ========================================================================== */
 
 class CameraEngine {
@@ -21,7 +21,7 @@ class CameraEngine {
         this.animFrameId = null;
         this.demoAngle = 0;
 
-        // Ensure video element has iOS Safari playsinline attributes
+        // Ensure video element has iOS Safari playsinline and muted attributes
         if (this.videoElement) {
             this.videoElement.setAttribute('playsinline', 'true');
             this.videoElement.setAttribute('webkit-playsinline', 'true');
@@ -29,22 +29,26 @@ class CameraEngine {
             this.videoElement.muted = true;
         }
 
-        // Keep camera powered OFF by default on page load / refresh
-        this.stopCamera();
+        // Attempt camera initialization on startup
+        this.initCamera();
     }
 
-    // Multi-tier camera constraint fallback pipeline for mobile compatibility
+    // Clean, universal mobile-compatible camera stream accessor
     async getMediaStream() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            // Mobile HTTP or unsupported browser fallback
+            if (navigator.getUserMedia) {
+                return new Promise((resolve, reject) => {
+                    navigator.getUserMedia({ video: true }, resolve, reject);
+                });
+            }
             throw new Error('MediaDevicesNotSupported');
         }
 
+        // Clean constraint tiers tested for Android Chrome & iOS Safari compatibility
         const constraintTiers = [
-            // Tier 1: Ideal HD 1280x720 with facing mode (mobile & desktop)
-            { video: { facingMode: this.facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
-            // Tier 2: Facing mode without resolution constraints
-            { video: { facingMode: this.facingMode }, audio: false },
-            // Tier 3: Simple video true fallback
+            { video: { facingMode: 'user' }, audio: false },
+            { video: { facingMode: 'environment' }, audio: false },
             { video: true, audio: false }
         ];
 
@@ -52,11 +56,9 @@ class CameraEngine {
         for (const constraints of constraintTiers) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                console.log('Camera stream acquired with constraints:', constraints);
                 return stream;
             } catch (err) {
                 lastError = err;
-                console.warn('Camera constraint tier failed, trying next tier...', constraints, err);
             }
         }
         throw lastError;
@@ -76,7 +78,7 @@ class CameraEngine {
             this.currentStream = stream;
             this.videoElement.srcObject = stream;
 
-            // Hide fallback overlay when camera stream is granted
+            // Hide fallback overlay when camera stream is live
             this.fallbackElement.classList.add('hidden');
             this.fallbackElement.style.display = 'none';
             this.statusText.textContent = 'Camera Live';
@@ -87,7 +89,7 @@ class CameraEngine {
             try {
                 await this.videoElement.play();
             } catch (playErr) {
-                console.log('Video play trigger status:', playErr);
+                console.log('Video play status:', playErr);
             }
 
             this.videoElement.onloadedmetadata = () => {
@@ -98,7 +100,7 @@ class CameraEngine {
             this.renderLiveFilters();
 
         } catch (err) {
-            console.warn('Webcam access error on mobile/desktop:', err);
+            console.warn('Camera initialization error:', err);
             this.fallbackElement.classList.remove('hidden');
             this.fallbackElement.style.display = 'flex';
             this.statusText.textContent = 'Camera Offline / Demo Mode';
@@ -106,7 +108,7 @@ class CameraEngine {
             this.updatePowerBtnState(false);
 
             if (fallbackText) {
-                fallbackText.textContent = 'Camera is offline or restricted. Tap "Turn On Camera" or try Virtual Demo Stream below!';
+                fallbackText.textContent = 'Camera is offline. Tap "Turn On Camera" to grant access or try Virtual Demo Stream below!';
             }
         }
     }
@@ -140,7 +142,7 @@ class CameraEngine {
 
         const fallbackText = document.getElementById('fallback-status-text');
         if (fallbackText) {
-            fallbackText.textContent = 'Camera is powered off. Click or tap "Turn On Camera" to start!';
+            fallbackText.textContent = 'Camera is powered off. Tap "Turn On Camera" to start!';
         }
 
         if (this.statusText) this.statusText.textContent = 'Camera Off';
