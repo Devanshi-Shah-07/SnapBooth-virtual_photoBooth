@@ -106,9 +106,6 @@
                                 <button id="btn-request-camera" class="btn btn-primary btn-sm">
                                     <i class="fa-solid fa-camera"></i> Turn On Camera
                                 </button>
-                                <button id="btn-unblock-help" class="btn btn-secondary btn-sm warning-btn" onclick="document.getElementById('camera-permission-modal').classList.remove('hidden')">
-                                    <i class="fa-solid fa-circle-question"></i> How to Allow Camera
-                                </button>
                                 <button id="btn-virtual-demo" class="btn btn-accent btn-sm">
                                     <i class="fa-solid fa-play"></i> Virtual Demo Stream
                                 </button>
@@ -428,55 +425,6 @@
             </div>
         </div>
 
-        <!-- Camera Permission Help Modal (Second Chance Guidance) -->
-        <div id="camera-permission-modal" class="modal-backdrop hidden">
-            <div class="modal-content help-modal-content">
-                <div class="modal-header">
-                    <h2><i class="fa-solid fa-shield-halved"></i> How to Allow Camera Access</h2>
-                    <button id="btn-close-permission-modal" class="modal-close-btn" onclick="document.getElementById('camera-permission-modal').classList.add('hidden')">&times;</button>
-                </div>
-                <div class="modal-body permission-help-body">
-                    <div class="permission-alert">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <div>
-                            <strong>Accidentally clicked "Never allow" or "Block"?</strong>
-                            <p>Don't worry! Browsers block re-asking camera permissions automatically, but you can give it a second chance in 2 easy steps:</p>
-                        </div>
-                    </div>
-
-                    <div class="guide-steps-grid">
-                        <div class="guide-card">
-                            <div class="guide-header"><i class="fa-desktop"></i> Desktop (Chrome / Edge / Firefox)</div>
-                            <ol class="guide-list">
-                                <li>Look at the top URL address bar next to the website link.</li>
-                                <li>Click the <strong>🔒 Lock icon</strong> or <strong>Tune icon</strong> (left of URL).</li>
-                                <li>Find <strong>Camera</strong> and toggle switch to <strong>ALLOW</strong>.</li>
-                                <li>Click the <strong>"Try Camera Again"</strong> button below!</li>
-                            </ol>
-                        </div>
-
-                        <div class="guide-card">
-                            <div class="guide-header"><i class="fa-mobile-screen"></i> Mobile (iPhone / Android)</div>
-                            <ol class="guide-list">
-                                <li>Tap the <strong>🔒 Lock</strong> or <strong>aA</strong> icon in the address bar.</li>
-                                <li>Select <strong>Website Settings</strong>.</li>
-                                <li>Tap <strong>Camera</strong> and set to <strong>Allow</strong>.</li>
-                                <li>Return here and tap <strong>"Try Camera Again"</strong>!</li>
-                            </ol>
-                        </div>
-                    </div>
-
-                    <div class="help-actions">
-                        <button id="btn-retry-camera-access" class="btn btn-primary btn-lg">
-                            <i class="fa-solid fa-rotate-right"></i> Try Camera Again
-                        </button>
-                        <button id="btn-fallback-demo-mode" class="btn btn-secondary btn-lg">
-                            <i class="fa-solid fa-play"></i> Use Virtual Demo Stream
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Print & Sizing Selection Modal -->
         <div id="print-size-modal" class="modal-backdrop hidden">

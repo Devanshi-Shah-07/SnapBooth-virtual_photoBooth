@@ -1,7 +1,7 @@
 /* ==========================================================================
    SnapBooth Studio - Camera Engine
    Webcam feed manager, live preview filter pipeline, countdown sequence, 
-   virtual live demo feed, manual power toggle, permission recovery & snapshot burst
+   virtual live demo feed, manual power toggle & snapshot burst
    ========================================================================== */
 
 class CameraEngine {
@@ -20,28 +20,9 @@ class CameraEngine {
         this.isDemoMode = false;
         this.animFrameId = null;
         this.demoAngle = 0;
-        this.permissionDenied = false;
 
-        this.setupPermissionListeners();
+        // Ask for camera permission immediately whenever page is opened/refreshed
         this.initCamera();
-    }
-
-    async setupPermissionListeners() {
-        if (navigator.permissions && navigator.permissions.query) {
-            try {
-                const status = await navigator.permissions.query({ name: 'camera' });
-                status.onchange = () => {
-                    if (status.state === 'granted') {
-                        this.permissionDenied = false;
-                        this.initCamera();
-                    } else if (status.state === 'denied') {
-                        this.permissionDenied = true;
-                    }
-                };
-            } catch (e) {
-                // Browser might not support 'camera' query name
-            }
-        }
     }
 
     async initCamera() {
@@ -60,10 +41,10 @@ class CameraEngine {
                 audio: false
             };
 
+            // Triggers browser's native camera permission prompt on page load/refresh
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.currentStream = stream;
             this.videoElement.srcObject = stream;
-            this.permissionDenied = false;
 
             // Hide fallback screen when stream is granted
             this.fallbackElement.classList.add('hidden');
@@ -90,34 +71,14 @@ class CameraEngine {
             console.warn('Webcam access error/restricted:', err);
             this.fallbackElement.classList.remove('hidden');
             this.fallbackElement.style.display = 'flex';
+            this.statusText.textContent = 'Camera Offline / Demo Mode';
+            if (this.statusDot) this.statusDot.style.background = '#f59e0b';
             this.updatePowerBtnState(false);
 
             const fallbackText = document.getElementById('fallback-status-text');
-
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                this.permissionDenied = true;
-                if (fallbackText) {
-                    fallbackText.innerHTML = `<strong>Camera Access Blocked!</strong><br><span style="font-size: 0.85rem;">Did you accidentally click "Block" or "Never allow"? Tap below for step-by-step unblock instructions.</span>`;
-                }
-                this.statusText.textContent = 'Camera Blocked (Fix Available)';
-                if (this.statusDot) this.statusDot.style.background = '#ef4444';
-                
-                // Show permission help modal to give second chance
-                this.showPermissionHelpModal();
-            } else {
-                if (fallbackText) {
-                    fallbackText.textContent = 'Camera access restricted or offline.';
-                }
-                this.statusText.textContent = 'Camera Offline / Demo Mode';
-                if (this.statusDot) this.statusDot.style.background = '#f59e0b';
+            if (fallbackText) {
+                fallbackText.textContent = 'Camera permission requested. Grant permission or use virtual demo mode below.';
             }
-        }
-    }
-
-    showPermissionHelpModal() {
-        const modal = document.getElementById('camera-permission-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
         }
     }
 
@@ -125,11 +86,7 @@ class CameraEngine {
         if (this.currentStream && this.currentStream.active) {
             this.stopCamera();
         } else {
-            if (this.permissionDenied) {
-                this.showPermissionHelpModal();
-            } else {
-                this.initCamera();
-            }
+            this.initCamera();
         }
     }
 

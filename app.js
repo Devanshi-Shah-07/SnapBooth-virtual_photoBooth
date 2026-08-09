@@ -94,31 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnRequestCamera.addEventListener('click', () => cameraEngine.initCamera());
     }
 
-    if (btnUnblockHelp) {
-        btnUnblockHelp.addEventListener('click', () => {
-            if (cameraPermissionModal) cameraPermissionModal.classList.remove('hidden');
-        });
-    }
 
-    if (btnClosePermissionModal) {
-        btnClosePermissionModal.addEventListener('click', () => {
-            if (cameraPermissionModal) cameraPermissionModal.classList.add('hidden');
-        });
-    }
-
-    if (btnRetryCameraAccess) {
-        btnRetryCameraAccess.addEventListener('click', () => {
-            if (cameraPermissionModal) cameraPermissionModal.classList.add('hidden');
-            cameraEngine.initCamera();
-        });
-    }
-
-    if (btnFallbackDemoMode) {
-        btnFallbackDemoMode.addEventListener('click', () => {
-            if (cameraPermissionModal) cameraPermissionModal.classList.add('hidden');
-            cameraEngine.startVirtualDemoFeed();
-        });
-    }
 
     if (btnVirtualDemo) {
         btnVirtualDemo.addEventListener('click', () => cameraEngine.startVirtualDemoFeed());
