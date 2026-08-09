@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapBooth Studio • Virtual Photobooth</title>
+    <meta name="description"
+        content="Capture retro photobooth photo strips, customize frames, apply aesthetic filters, add stickers, and download PNG & GIF strips online!">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=Playfair+Display:wght@400;600;700;800&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Lobster&family=Bebas+Neue&family=Righteous&family=Permanent+Marker&family=Abril+Fatface&family=Indie+Flower&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Background Animated Elements -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-grid-pattern"></div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Header / Navigation -->
+        <header class="app-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-camera-retro"></i></div>
+                <div class="logo-text">
+                    <h1>SnapBooth <span>Studio</span></h1>
+                    <p class="tagline">Virtual Photobooth & Retro Strip Creator</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="btn-enable-cam" class="btn btn-primary btn-sm" title="Toggle Camera Power">
+                    <i class="fa-solid fa-power-off"></i> <span id="btn-enable-cam-text">Camera Power</span>
+                </button>
+                <button id="btn-session-gallery" class="btn btn-secondary">
+                    <i class="fa-solid fa-images"></i>
+                    <span>Gallery</span>
+                    <span id="gallery-count-badge" class="badge">0</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Flash Overlay for Shutter Effect -->
+        <div id="shutter-flash" class="shutter-flash"></div>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            <!-- Left Side: Camera Studio & Controls -->
+            <section class="studio-section">
+                <!-- Camera Card -->
+                <div class="card camera-card">
+                    <!-- Top Bar -->
+                    <div class="card-header">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span id="camera-status-text">Camera Ready</span>
+                        </div>
+                        <div class="camera-controls-mini">
+                            <button id="btn-toggle-camera-power" class="icon-btn active-power"
+                                title="Turn Camera On/Off">
+                                <i class="fa-solid fa-power-off"></i>
+                            </button>
+                            <button id="btn-switch-camera" class="icon-btn" title="Switch Camera">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                            <label class="icon-btn" title="Upload Image File" for="file-upload-input">
+                                <i class="fa-solid fa-upload"></i>
+                                <input type="file" id="file-upload-input" accept="image/*" multiple hidden>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Live Viewfinder Box -->
+                    <div class="viewfinder-container">
+                        <video id="webcam-video" autoplay playsinline muted></video>
+                        <canvas id="live-filter-canvas"></canvas>
+
+                        <!-- Screen Countdown Overlay -->
+                        <div id="countdown-overlay" class="countdown-overlay hidden">
+                            <span id="countdown-number">3</span>
+                        </div>
+
+                        <!-- Photobooth Shot Counter Overlay -->
+                        <div id="shot-progress-overlay" class="shot-progress-overlay hidden">
+                            <div id="shot-progress-text">Shot 1 of 4</div>
+                            <div class="shot-dots" id="shot-dots"></div>
+                        </div>
+
+                        <!-- Fallback message if no camera -->
+                        <div id="camera-fallback" class="camera-fallback hidden">
+                            <i class="fa-solid fa-video-slash"></i>
+                            <p id="fallback-status-text">Camera access restricted or offline.</p>
+                            <div class="fallback-btn-group">
+                                <button id="btn-request-camera" class="btn btn-primary btn-sm">
+                                    <i class="fa-solid fa-camera"></i> Turn On Camera
+                                </button>
+                                <button id="btn-virtual-demo" class="btn btn-accent btn-sm">
+                                    <i class="fa-solid fa-play"></i> Virtual Demo Stream
+                                </button>
+                                <label for="file-upload-input" class="btn btn-secondary btn-sm">
+                                    <i class="fa-solid fa-upload"></i> Upload Photos
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Selector Carousel -->
+                    <div class="filter-section">
+                        <div class="section-title">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Filter Effects
+                        </div>
+                        <div class="filter-bar" id="filter-bar">
+                            <button class="filter-chip active" data-filter="normal">
+                                <span class="chip-preview preview-normal"></span> Normal
+                            </button>
+                            <button class="filter-chip" data-filter="vintage">
+                                <span class="chip-preview preview-vintage"></span> 90s Vintage
+                            </button>
+                            <button class="filter-chip" data-filter="bw">
+                                <span class="chip-preview preview-bw"></span> Noir B&W
+                            </button>
+                            <button class="filter-chip" data-filter="sepia">
+                                <span class="chip-preview preview-sepia"></span> Sepia Warm
+                            </button>
+                            <button class="filter-chip" data-filter="cyber">
+                                <span class="chip-preview preview-cyber"></span> Cyber Neon
+                            </button>
+                            <button class="filter-chip" data-filter="golden">
+                                <span class="chip-preview preview-golden"></span> Golden Hour
+                            </button>
+                            <button class="filter-chip" data-filter="pastel">
+                                <span class="chip-preview preview-pastel"></span> Soft Pastel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Shot Manager Tray (Delete individual photos) -->
+                    <div class="shots-manager-section">
+                        <div class="section-title justify-between">
+                            <span><i class="fa-solid fa-images"></i> Shot Manager</span>
+                            <span id="shots-count-text" class="text-subtle">0 photos taken</span>
+                        </div>
+                        <div class="shots-tray" id="shots-tray">
+                            <p class="empty-tray-text">No shots captured yet. Press "TAKE PHOTOS" to start!</p>
+                        </div>
+                    </div>
+
+                    <!-- Capture Action Controls -->
+                    <div class="capture-controls">
+                        <div class="timer-selector">
+                            <label><i class="fa-regular fa-clock"></i> Delay:</label>
+                            <select id="timer-delay-select" class="select-input">
+                                <option value="3">3s Delay</option>
+                                <option value="5" selected>5s Delay</option>
+                                <option value="1">1s Fast</option>
+                            </select>
+                        </div>
+
+                        <button id="btn-start-capture" class="btn btn-capture">
+                            <div class="capture-ring">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <span>TAKE PHOTOS</span>
+                        </button>
+
+                        <button id="btn-retake-all" class="btn btn-outline" title="Clear All Shots">
+                            <i class="fa-solid fa-trash-can"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Customization & Photo Strip Preview -->
+            <section class="preview-section">
+                <!-- Customization Options Bar -->
+                <div class="card customization-card">
+                    <div class="tabs-nav">
+                        <button class="tab-btn active" data-tab="tab-layout">
+                            <i class="fa-solid fa-border-all"></i> Layout
+                        </button>
+                        <button class="tab-btn" data-tab="tab-frame">
+                            <i class="fa-solid fa-palette"></i> Frame & Borders
+                        </button>
+                        <button class="tab-btn" data-tab="tab-stickers">
+                            <i class="fa-solid fa-face-smile"></i> Stickers
+                        </button>
+                        <button class="tab-btn" data-tab="tab-text">
+                            <i class="fa-solid fa-font"></i> Text & Stamp
+                        </button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="tab-content-container">
+                        <!-- Tab 1: Layout Selector -->
+                        <div id="tab-layout" class="tab-pane active">
+                            <div class="layout-grid">
+                                <button class="layout-card active" data-layout="strip-4">
+                                    <div class="layout-icon icon-strip-4"></div>
+                                    <span>4-Photo Vertical Strip</span>
+                                </button>
+                                <button class="layout-card" data-layout="strip-3">
+                                    <div class="layout-icon icon-strip-3"></div>
+                                    <span>3-Photo Vertical Strip</span>
+                                </button>
+                                <button class="layout-card" data-layout="strip-2">
+                                    <div class="layout-icon icon-strip-2"></div>
+                                    <span>2-Photo Duo Strip</span>
+                                </button>
+                                <button class="layout-card" data-layout="grid-2x2">
+                                    <div class="layout-icon icon-grid-2x2"></div>
+                                    <span>2x2 Grid Collage</span>
+                                </button>
+                                <button class="layout-card" data-layout="grid-3x2">
+                                    <div class="layout-icon icon-grid-3x2"></div>
+                                    <span>6-Photo Party Grid</span>
+                                </button>
+                                <button class="layout-card" data-layout="polaroid">
+                                    <div class="layout-icon icon-polaroid"></div>
+                                    <span>Polaroid Snap</span>
+                                </button>
+                                <button class="layout-card" data-layout="film-roll">
+                                    <div class="layout-icon icon-film-roll"></div>
+                                    <span>35mm Film Roll</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Frame Colors & Border Styles -->
+                        <div id="tab-frame" class="tab-pane">
+                            <div class="option-group">
+                                <label>Border Style:</label>
+                                <div class="border-style-selector" id="border-style-selector">
+                                    <button class="border-style-chip active" data-border="solid">
+                                        <i class="fa-square"></i> Classic Solid
+                                    </button>
+                                    <button class="border-style-chip" data-border="film">
+                                        <i class="fa-film"></i> 35mm Sprockets
+                                    </button>
+                                    <button class="border-style-chip" data-border="stamp">
+                                        <i class="fa-stamp"></i> Postage Stamp
+                                    </button>
+                                    <button class="border-style-chip" data-border="neon">
+                                        <i class="fa-bolt"></i> Cyber Neon Glow
+                                    </button>
+                                    <button class="border-style-chip" data-border="dots">
+                                        <i class="fa-circle-dot"></i> Polka Dots
+                                    </button>
+                                    <button class="border-style-chip" data-border="stitch">
+                                        <i class="fa-grip-lines"></i> Dashed Stitching
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="option-group">
+                                <label>Frame Color & Texture:</label>
+                                <div class="color-swatches" id="frame-color-swatches">
+                                    <button class="color-swatch active" data-color="#FFFFFF" title="Classic White"
+                                        style="background: #FFFFFF;"></button>
+                                    <button class="color-swatch" data-color="#121212" title="Onyx Black"
+                                        style="background: #121212;"></button>
+                                    <button class="color-swatch" data-color="#FFD1DC" title="Pastel Pink"
+                                        style="background: #FFD1DC;"></button>
+                                    <button class="color-swatch" data-color="#B2F7EF" title="Mint Teal"
+                                        style="background: #B2F7EF;"></button>
+                                    <button class="color-swatch" data-color="#FDFD96" title="Sunshine Yellow"
+                                        style="background: #FDFD96;"></button>
+                                    <button class="color-swatch" data-color="#E6E6FA" title="Soft Lavender"
+                                        style="background: #E6E6FA;"></button>
+                                    <button class="color-swatch swatch-gradient-sunset" data-color="gradient-sunset"
+                                        title="Sunset Glow"></button>
+                                    <button class="color-swatch swatch-checkerboard" data-color="pattern-checker"
+                                        title="Y2K Checkerboard"></button>
+                                </div>
+                            </div>
+
+                            <div class="option-group inline-options">
+                                <label for="frame-padding">Border Thickness:</label>
+                                <input type="range" id="frame-padding" min="10" max="40" value="20">
+                                <label for="frame-corner">Rounded Corners:</label>
+                                <input type="range" id="frame-corner" min="0" max="25" value="8">
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Sticker Decorator -->
+                        <div id="tab-stickers" class="tab-pane">
+                            <p class="hint-text"><i class="fa-solid fa-hand-pointer"></i> Click a sticker to stamp on
+                                strip. Drag, resize or delete active stickers!</p>
+                            <div class="sticker-category-tabs">
+                                <button class="sticker-cat-btn active" data-cat="cute">Cute & Emojis</button>
+                                <button class="sticker-cat-btn" data-cat="y2k">Retro Y2K</button>
+                                <button class="sticker-cat-btn" data-cat="stamps">Labels & Stamps</button>
+                            </div>
+                            <div class="sticker-grid" id="sticker-grid">
+                                <!-- Stickers inserted dynamically -->
+                            </div>
+                            <button id="btn-clear-stickers" class="btn btn-sm btn-outline danger-text">
+                                <i class="fa-solid fa-trash-can"></i> Clear All Stickers
+                            </button>
+                        </div>
+
+                        <!-- Tab 4: Text Caption & Timestamp -->
+                        <div id="tab-text" class="tab-pane">
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="input-header-text">Strip Title / Header:</label>
+                                    <input type="text" id="input-header-text" value="SNAPBOOTH STUDIO"
+                                        placeholder="e.g. SUMMER VIBES">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="input-footer-text">Footer Subtext:</label>
+                                    <input type="text" id="input-footer-text" value="MEMORIES • PHOTOBOOTH"
+                                        placeholder="e.g. BEST FRIENDS FOREVER">
+                                </div>
+                            </div>
+
+                            <div class="form-row mt-1">
+                                <div class="form-group flex-1">
+                                    <label for="font-family-select">Caption Font Style:</label>
+                                    <select id="font-family-select" class="select-input">
+                                        <optgroup label="✍️ Handwritten & Script">
+                                            <option value="'Caveat', cursive" selected>Handwritten Script (Caveat)
+                                            </option>
+                                            <option value="'Dancing Script', cursive">Elegant Cursive (Dancing Script)
+                                            </option>
+                                            <option value="'Pacifico', cursive">Surf Vibes (Pacifico)</option>
+                                            <option value="'Indie Flower', cursive">Doodle Notes (Indie Flower)</option>
+                                            <option value="'Permanent Marker', cursive">Bold Marker (Permanent Marker)
+                                            </option>
+                                        </optgroup>
+                                        <optgroup label="🅰️ Modern & Clean">
+                                            <option value="'Outfit', sans-serif">Modern Clean (Outfit)</option>
+                                            <option value="'Space Grotesk', sans-serif">Retro Typewriter (Space Grotesk)
+                                            </option>
+                                            <option value="'Bebas Neue', sans-serif">Bold Headlines (Bebas Neue)
+                                            </option>
+                                            <option value="'Righteous', sans-serif">Retro Rounded (Righteous)</option>
+                                        </optgroup>
+                                        <optgroup label="🎨 Decorative & Display">
+                                            <option value="'Playfair Display', serif">Elegant Serif (Playfair Display)
+                                            </option>
+                                            <option value="'Lobster', cursive">Retro Fancy (Lobster)</option>
+                                            <option value="'Abril Fatface', serif">Fashion Display (Abril Fatface)
+                                            </option>
+                                            <option value="'Press Start 2P', monospace">Pixel Arcade (Press Start 2P)
+                                            </option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-group flex-1 align-end">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="toggle-date-stamp" checked>
+                                        <span>Include Date Stamp</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photobooth Canvas Display Area -->
+                <div class="card preview-card">
+                    <div class="strip-canvas-wrapper" id="canvas-wrapper-container">
+                        <!-- Dynamic Strip Canvas -->
+                        <canvas id="photobooth-canvas"></canvas>
+
+                        <!-- Overlay Draggable Stickers Layer -->
+                        <div id="sticker-drag-layer" class="sticker-drag-layer"></div>
+                    </div>
+
+                    <!-- Export Actions Bar -->
+                    <div class="export-bar">
+                        <button id="btn-download-png" class="btn btn-primary btn-lg">
+                            <i class="fa-solid fa-download"></i> Download Photo Strip (PNG)
+                        </button>
+                        <button id="btn-download-gif" class="btn btn-accent btn-lg">
+                            <i class="fa-solid fa-film"></i> Save Animated GIF
+                        </button>
+                        <button id="btn-copy-clipboard" class="btn btn-secondary icon-only" title="Copy to Clipboard">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Session Gallery Modal / Drawer -->
+        <div id="gallery-modal" class="modal-backdrop hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-images"></i> Photobooth Session Gallery</h2>
+                    <div class="modal-header-actions">
+                        <span class="persistence-badge"><i class="fa-solid fa-hard-drive"></i> Saved Locally</span>
+                        <button id="btn-clear-gallery" class="btn btn-sm btn-outline danger-text">
+                            <i class="fa-solid fa-trash-can"></i> Clear All
+                        </button>
+                        <button id="btn-close-gallery" class="modal-close-btn">&times;</button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div id="gallery-grid" class="gallery-grid">
+                        <!-- Saved strips render here -->
+                    </div>
+                    <div id="gallery-empty" class="gallery-empty">
+                        <i class="fa-solid fa-camera-retro"></i>
+                        <p>No photo strips saved yet. Take some photos to start your collection!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="utils/audio.js"></script>
+    <script src="utils/gifEncoder.js"></script>
+    <script src="camera.js"></script>
+    <script src="canvasBuilder.js"></script>
+    <script src="stickers.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
