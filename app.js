@@ -1,11 +1,11 @@
 /* ==========================================================================
    SnapBooth Studio - Main Application Controller
-   Connects camera stream, camera power switch, individual photo deletion, 
-   canvas rendering, customization tabs, export, print sizing, permission recovery 
-   & high-capacity IndexedDB session gallery
+   Connects camera stream, camera power switch, photo deletion, canvas rendering,
+   customization tabs, direct browser printing, print size modal, permission recovery 
+   & high-capacity IndexedDB gallery
    ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     // 1. Initialize Core Engines
     const cameraEngine = new CameraEngine();
     const canvasBuilder = new PhotoboothCanvasBuilder('photobooth-canvas');
@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnDownloadGif = document.getElementById('btn-download-gif');
     const btnCopyClipboard = document.getElementById('btn-copy-clipboard');
     const btnOpenPrintModal = document.getElementById('btn-open-print-modal');
+    const btnDirectPrint = document.getElementById('btn-direct-print');
 
     const galleryModal = document.getElementById('gallery-modal');
     const btnSessionGallery = document.getElementById('btn-session-gallery');
@@ -42,13 +43,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const galleryEmpty = document.getElementById('gallery-empty');
     const galleryCountBadge = document.getElementById('gallery-count-badge');
 
-    // Camera Permission Modal References
+    // Camera Permission Help Modal
     const cameraPermissionModal = document.getElementById('camera-permission-modal');
     const btnClosePermissionModal = document.getElementById('btn-close-permission-modal');
     const btnRetryCameraAccess = document.getElementById('btn-retry-camera-access');
     const btnFallbackDemoMode = document.getElementById('btn-fallback-demo-mode');
 
-    // Print Size Modal References
+    // Print Size Selection Modal
     const printSizeModal = document.getElementById('print-size-modal');
     const btnClosePrintModal = document.getElementById('btn-close-print-modal');
     const btnTriggerPrint = document.getElementById('btn-trigger-print');
@@ -56,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const printSizeCards = document.querySelectorAll('.print-size-card');
     let selectedPrintSize = 'strip-2x6';
 
-    // 2. High Capacity IndexedDB Gallery Integration
+    // 2. Non-blocking Gallery & Badge initialization
     const updateGalleryBadgeCount = async () => {
         try {
             if (window.galleryDB) {
@@ -64,33 +65,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (galleryCountBadge) galleryCountBadge.textContent = photos.length;
             }
         } catch (e) {
-            console.warn('Failed to update gallery count badge:', e);
+            console.warn('Failed to update gallery badge count:', e);
         }
     };
 
-    // Migrate any legacy photos & refresh count
-    if (window.galleryDB) {
-        await window.galleryDB.migrateFromLocalStorage();
-        await updateGalleryBadgeCount();
-    }
+    // Run DB migration safely in background without blocking event listener registration
+    (async () => {
+        try {
+            if (window.galleryDB) {
+                await window.galleryDB.migrateFromLocalStorage();
+                await updateGalleryBadgeCount();
+            }
+        } catch (err) {
+            console.warn('DB background init warning:', err);
+        }
+    })();
 
-    // 3. Camera Controls & Permission Recovery
+    // 3. Camera Power Switch & Permission Recovery Handlers
     if (btnToggleCameraPower) {
-        btnToggleCameraPower.addEventListener('click', () => {
-            cameraEngine.toggleCameraPower();
-        });
+        btnToggleCameraPower.addEventListener('click', () => cameraEngine.toggleCameraPower());
     }
 
     if (btnEnableCam) {
-        btnEnableCam.addEventListener('click', () => {
-            cameraEngine.toggleCameraPower();
-        });
+        btnEnableCam.addEventListener('click', () => cameraEngine.toggleCameraPower());
     }
 
     if (btnRequestCamera) {
-        btnRequestCamera.addEventListener('click', () => {
-            cameraEngine.initCamera();
-        });
+        btnRequestCamera.addEventListener('click', () => cameraEngine.initCamera());
     }
 
     if (btnUnblockHelp) {
@@ -120,15 +121,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (btnVirtualDemo) {
-        btnVirtualDemo.addEventListener('click', () => {
-            cameraEngine.startVirtualDemoFeed();
-        });
+        btnVirtualDemo.addEventListener('click', () => cameraEngine.startVirtualDemoFeed());
     }
 
     if (btnSwitchCamera) {
-        btnSwitchCamera.addEventListener('click', () => {
-            cameraEngine.switchCamera();
-        });
+        btnSwitchCamera.addEventListener('click', () => cameraEngine.switchCamera());
     }
 
     // Handle File Upload Fallback
@@ -155,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Render Shot Manager Tray Thumbnails with Delete Buttons
+    // Render Shot Manager Tray Thumbnails
     const renderShotsTray = () => {
         if (!shotsTray) return;
 
@@ -197,7 +194,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // Delete single photo at specific index
     const deleteIndividualShot = (index) => {
         if (index >= 0 && index < capturedShots.length) {
             capturedShots.splice(index, 1);
@@ -262,7 +258,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Reset / Retake All Button
     if (btnRetakeAll) {
         btnRetakeAll.addEventListener('click', () => {
             capturedShots = [];
@@ -287,14 +282,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Layout Selector Cards
+    // Layout Cards
     const layoutCards = document.querySelectorAll('.layout-card');
     layoutCards.forEach(card => {
         card.addEventListener('click', () => {
             layoutCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            const layout = card.dataset.layout;
-            canvasBuilder.setLayout(layout);
+            canvasBuilder.setLayout(card.dataset.layout);
         });
     });
 
@@ -304,8 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         chip.addEventListener('click', () => {
             borderChips.forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
-            const borderStyle = chip.dataset.border;
-            canvasBuilder.setBorderStyle(borderStyle);
+            canvasBuilder.setBorderStyle(chip.dataset.border);
         });
     });
 
@@ -318,8 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         swatch.addEventListener('click', () => {
             colorSwatches.forEach(s => s.classList.remove('active'));
             swatch.classList.add('active');
-            const color = swatch.dataset.color;
-            canvasBuilder.setFrameStyle(color, framePaddingInput.value, frameCornerInput.value);
+            canvasBuilder.setFrameStyle(swatch.dataset.color, framePaddingInput.value, frameCornerInput.value);
         });
     });
 
@@ -352,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (fontSelect) fontSelect.addEventListener('change', updateTextCaptions);
     if (toggleDate) toggleDate.addEventListener('change', updateTextCaptions);
 
-    // 7. Composite High-Res Canvas Generator
+    // 7. High-Res Canvas Compositor
     const generateCompositeCanvas = (scaleMultiplier = 1) => {
         const baseCanvas = document.getElementById('photobooth-canvas');
         const exportCanvas = document.createElement('canvas');
@@ -389,6 +381,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         return exportCanvas;
     };
+
+    // 8. Direct Reliable Printing Function
+    const triggerDirectPrint = () => {
+        const finalCanvas = generateCompositeCanvas(2);
+        const dataUrl = finalCanvas.toDataURL('image/png', 1.0);
+
+        let printableArea = document.getElementById('printable-area');
+        if (!printableArea) {
+            printableArea = document.createElement('div');
+            printableArea.id = 'printable-area';
+            printableArea.className = 'printable-area';
+            document.body.appendChild(printableArea);
+        }
+
+        printableArea.innerHTML = `<img src="${dataUrl}" alt="Photobooth Print" />`;
+
+        // Small delay to ensure image DOM loading, then trigger browser print dialog
+        setTimeout(() => {
+            window.print();
+        }, 150);
+    };
+
+    // Direct Print Button
+    if (btnDirectPrint) {
+        btnDirectPrint.addEventListener('click', triggerDirectPrint);
+    }
 
     // Download PNG
     if (btnDownloadPng) {
@@ -453,7 +471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 8. Print Size Selection Modal & Native Printing
+    // 9. Print Size Selection Modal
     if (btnOpenPrintModal) {
         btnOpenPrintModal.addEventListener('click', () => {
             if (printSizeModal) printSizeModal.classList.remove('hidden');
@@ -474,55 +492,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Trigger Print Action
     if (btnTriggerPrint) {
         btnTriggerPrint.addEventListener('click', () => {
-            const finalCanvas = generateCompositeCanvas(2);
-            const dataUrl = finalCanvas.toDataURL('image/png', 1.0);
-
-            // Open print window formatted for chosen print size
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-                printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>SnapBooth Studio Print</title>
-                        <style>
-                            @page {
-                                margin: 0;
-                                size: auto;
-                            }
-                            body {
-                                margin: 0;
-                                padding: 0;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                min-height: 100vh;
-                                background: #fff;
-                            }
-                            img {
-                                max-width: 100%;
-                                max-height: 100vh;
-                                object-fit: contain;
-                                page-break-inside: avoid;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <img src="${dataUrl}" onload="window.print(); window.close();" />
-                    </body>
-                    </html>
-                `);
-                printWindow.document.close();
-            } else {
-                window.print();
-            }
+            if (printSizeModal) printSizeModal.classList.add('hidden');
+            triggerDirectPrint();
         });
     }
 
-    // Download High-Res 300 DPI PNG
     if (btnDownloadHighresPrint) {
         btnDownloadHighresPrint.addEventListener('click', async () => {
             const finalCanvas = generateCompositeCanvas(2);
@@ -538,7 +514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 9. High-Capacity IndexedDB Gallery Engine
+    // 10. IndexedDB Gallery Operations
     const saveToHighCapacityGallery = async (dataUrl) => {
         try {
             if (window.galleryDB) {

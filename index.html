@@ -44,7 +44,7 @@
                 <button id="btn-enable-cam" class="btn btn-primary btn-sm" title="Toggle Camera Power">
                     <i class="fa-solid fa-power-off"></i> <span id="btn-enable-cam-text">Camera Power</span>
                 </button>
-                <button id="btn-session-gallery" class="btn btn-secondary">
+                <button id="btn-session-gallery" class="btn btn-secondary" onclick="document.getElementById('gallery-modal').classList.remove('hidden')">
                     <i class="fa-solid fa-images"></i>
                     <span>Gallery</span>
                     <span id="gallery-count-badge" class="badge">0</span>
@@ -106,7 +106,7 @@
                                 <button id="btn-request-camera" class="btn btn-primary btn-sm">
                                     <i class="fa-solid fa-camera"></i> Turn On Camera
                                 </button>
-                                <button id="btn-unblock-help" class="btn btn-secondary btn-sm warning-btn">
+                                <button id="btn-unblock-help" class="btn btn-secondary btn-sm warning-btn" onclick="document.getElementById('camera-permission-modal').classList.remove('hidden')">
                                     <i class="fa-solid fa-circle-question"></i> How to Allow Camera
                                 </button>
                                 <button id="btn-virtual-demo" class="btn btn-accent btn-sm">
@@ -389,8 +389,11 @@
                         <button id="btn-download-gif" class="btn btn-accent btn-lg">
                             <i class="fa-solid fa-film"></i> Save GIF
                         </button>
-                        <button id="btn-open-print-modal" class="btn btn-secondary icon-with-text">
-                            <i class="fa-solid fa-print"></i> Print & Sizes
+                        <button id="btn-direct-print" class="btn btn-secondary icon-with-text" title="Print Directly">
+                            <i class="fa-solid fa-print"></i> Print
+                        </button>
+                        <button id="btn-open-print-modal" class="btn btn-secondary icon-with-text" onclick="document.getElementById('print-size-modal').classList.remove('hidden')">
+                            <i class="fa-solid fa-sliders"></i> Print Sizes
                         </button>
                         <button id="btn-copy-clipboard" class="btn btn-secondary icon-only" title="Copy to Clipboard">
                             <i class="fa-regular fa-copy"></i>
@@ -410,7 +413,7 @@
                         <button id="btn-clear-gallery" class="btn btn-sm btn-outline danger-text">
                             <i class="fa-solid fa-trash-can"></i> Clear All
                         </button>
-                        <button id="btn-close-gallery" class="modal-close-btn">&times;</button>
+                        <button id="btn-close-gallery" class="modal-close-btn" onclick="document.getElementById('gallery-modal').classList.add('hidden')">&times;</button>
                     </div>
                 </div>
                 <div class="modal-body">
@@ -430,7 +433,7 @@
             <div class="modal-content help-modal-content">
                 <div class="modal-header">
                     <h2><i class="fa-solid fa-shield-halved"></i> How to Allow Camera Access</h2>
-                    <button id="btn-close-permission-modal" class="modal-close-btn">&times;</button>
+                    <button id="btn-close-permission-modal" class="modal-close-btn" onclick="document.getElementById('camera-permission-modal').classList.add('hidden')">&times;</button>
                 </div>
                 <div class="modal-body permission-help-body">
                     <div class="permission-alert">
@@ -480,7 +483,7 @@
             <div class="modal-content print-modal-content">
                 <div class="modal-header">
                     <h2><i class="fa-solid fa-print"></i> Select Print Size & Format</h2>
-                    <button id="btn-close-print-modal" class="modal-close-btn">&times;</button>
+                    <button id="btn-close-print-modal" class="modal-close-btn" onclick="document.getElementById('print-size-modal').classList.add('hidden')">&times;</button>
                 </div>
                 <div class="modal-body print-modal-body">
                     <p class="hint-text text-center mb-4">Choose your preferred photo printing size or export standard:</p>
@@ -536,6 +539,9 @@
         </div>
 
     </div>
+
+    <!-- Hidden Printable Image Area for Direct Window Printing -->
+    <div id="printable-area" class="printable-area"></div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
