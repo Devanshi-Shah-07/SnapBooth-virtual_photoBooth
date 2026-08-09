@@ -305,13 +305,35 @@ const initApp = () => {
         });
     }
 
-    // 4. Capture Burst & Retake Engine
+    // Layout Selector Cards (Synced across View 2 Capture & View 3 Editor)
+    document.querySelectorAll('.layout-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const layout = card.getAttribute('data-layout');
+            document.querySelectorAll('.layout-card').forEach(c => {
+                if (c.getAttribute('data-layout') === layout) {
+                    c.classList.add('active');
+                } else {
+                    c.classList.remove('active');
+                }
+            });
+            if (canvasBuilder) canvasBuilder.setLayout(layout);
+            window.toast?.info(`Layout set to ${card.querySelector('span')?.textContent || layout}`);
+        });
+    });
+
+    // 4. Capture Burst & Retake Engine (Laptop & Mobile Compatible)
     const btnStartCapture = document.getElementById('btn-start-capture');
     const delaySelect = document.getElementById('timer-delay-select');
 
     if (btnStartCapture) {
         btnStartCapture.addEventListener('click', () => {
             if (!camera || camera.isCapturing) return;
+
+            // Laptop Fallback: If webcam is not running or denied on laptop, auto-start Virtual Stream
+            if (!camera.isPoweredOn && !camera.currentStream && !camera.isDemoMode) {
+                camera.startVirtualDemoFeed();
+                window.toast?.info('Starting Virtual Camera Stream for Laptop Photobooth...');
+            }
 
             const delay = parseInt(delaySelect?.value || '3', 10) || 3;
             const shotsNeeded = getLayoutMaxShots(canvasBuilder?.layout || 'strip-4');
@@ -324,6 +346,7 @@ const initApp = () => {
                 delay,
                 (shotCanvas) => {
                     capturedShots.push(shotCanvas);
+                    if (canvasBuilder) canvasBuilder.setShots(capturedShots);
                     renderShotsTray();
                 },
                 () => {
